@@ -70,10 +70,17 @@ def train(args, TrainImgLoader, model, optimizer, scheduler, scaler, logger, dev
         data_generate = Data_preprocess(calib, occlusion_threshold, occlusion_kernel)
         event_input, lidar_input, x_list, y_list = data_generate.push_input(event_frame, pc, T_err, R_err, device, split='train')
 
-        vis_event_time_image = event_input[0, ...].permute(1, 2, 0).cpu().numpy()
-        vis_event_time_image = np.concatenate((np.zeros([vis_event_time_image.shape[0], vis_event_time_image.shape[1], 1]), vis_event_time_image), axis=2)
+        vis_event_time_image = event_input[0,...].permute(1, 2, 0).cpu().numpy()
+        if vis_event_time_image.shape[2] == 1:
+            vis_event_time_image = event_input[0,...].permute(1, 2, 0).repeat(1, 1, 3).cpu().numpy()
+        else:
+            vis_event_time_image = np.concatenate((np.zeros([vis_event_time_image.shape[0], vis_event_time_image.shape[1], 1]), vis_event_time_image), axis=2)
+        vis_event_time_image = vis_event_time_image[:, :, :3]
         cv2.imwrite(f"./visualization/{i_batch:05d}_event.png", (vis_event_time_image / np.max(vis_event_time_image) * 255).astype(np.uint8))
-        vis_lidar_input = overlay_imgs(event_input[0, :, :, :]*0, lidar_input[0, 0, :, :])
+        if event_input.shape[1] == 1:
+            vis_lidar_input = overlay_imgs(event_input[0, :, :, :].repeat(3, 1, 1)*0, lidar_input[0, 0, :, :])
+        else:
+            vis_lidar_input = overlay_imgs(event_input[0, :3, :, :]*0, lidar_input[0, 0, :, :])
         lidar_input[lidar_input==1000.] = 0.
         cv2.imwrite(f"./visualization/{i_batch:05d}_projection.png", (vis_lidar_input / np.max(vis_lidar_input) * 255).astype(np.uint8))
 

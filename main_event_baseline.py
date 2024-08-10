@@ -19,7 +19,6 @@ from core.flow_viz import flow_to_image
 from core.flow2pose import Flow2Pose, err_Pose
 from core.losses import sequence_loss
 from core.depth_completion import sparse_to_dense
-from core.Kinect_Smoothing.kinect_smoothing import Denoising_Filter
 
 occlusion_kernel = 5
 occlusion_threshold = 3
@@ -72,10 +71,16 @@ def train(args, TrainImgLoader, model, optimizer, scheduler, scaler, logger, dev
         event_input, lidar_input, flow_gt = data_generate.push(event_frame, pc, T_err, R_err, device)
 
         vis_event_time_image = event_input[0,...].permute(1, 2, 0).cpu().numpy()
-        vis_event_time_image = np.concatenate((np.zeros([vis_event_time_image.shape[0], vis_event_time_image.shape[1], 1]), vis_event_time_image), axis=2)
+        if vis_event_time_image.shape[2] == 1:
+            vis_event_time_image = event_input[0,...].permute(1, 2, 0).repeat(1, 1, 3).cpu().numpy()
+        else:
+            vis_event_time_image = np.concatenate((np.zeros([vis_event_time_image.shape[0], vis_event_time_image.shape[1], 1]), vis_event_time_image), axis=2)
         vis_event_time_image = vis_event_time_image[:, :, :3]
         cv2.imwrite(f"./visualization/{i_batch:05d}_event.png", (vis_event_time_image / np.max(vis_event_time_image) * 255).astype(np.uint8))
-        vis_lidar_input = overlay_imgs(event_input[0, :3, :, :]*0, lidar_input[0, 0, :, :])
+        if event_input.shape[1] == 1:
+            vis_lidar_input = overlay_imgs(event_input[0, :, :, :].repeat(3, 1, 1)*0, lidar_input[0, 0, :, :])
+        else:
+            vis_lidar_input = overlay_imgs(event_input[0, :3, :, :]*0, lidar_input[0, 0, :, :])
         lidar_input[lidar_input==1000.] = 0.
         cv2.imwrite(f"./visualization/{i_batch:05d}_projection.png", (vis_lidar_input / np.max(vis_lidar_input) * 255).astype(np.uint8))
 

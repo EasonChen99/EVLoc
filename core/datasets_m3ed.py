@@ -176,7 +176,7 @@ class DatasetM3ED(Dataset):
         # event_frame = cv2.medianBlur(event_frame, 3)
         # event_frame = cv2.GaussianBlur(event_frame, (7,7), 0)
         # event_frame = cv2.GaussianBlur(event_frame, (5,5), 0)
-        event_time_frame = torch.tensor(event_frame)
+        event_time_frame = torch.tensor(event_frame).float()
         # event_time_frame = torch.tensor(np.load(event_frame_path)).permute(1, 2, 0)
         event_time_frame[event_time_frame<0] = 0
         event_time_frame /= torch.max(event_time_frame)
