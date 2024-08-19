@@ -77,7 +77,7 @@ def Flow2Pose(flow_up, depth, calib, flow_gt=None, uncertainty=None):
               'params': [cam_params[0], cam_params[2], cam_params[3]]}
     pose, inliers = poselib.estimate_absolute_pose(pts2d, pts3d, camera, 
                                                 {
-                                                "max_reproj_error": 30.0,
+                                                "max_reproj_error": 12.0,
                                                 "seed": 0,
                                                 "progressive_sampling" : False,
                                                 "max_prosac_iterations": 50000,
