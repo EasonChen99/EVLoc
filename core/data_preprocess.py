@@ -47,7 +47,7 @@ class Data_preprocess:
                                                                              depth_img_RT.shape[1],
                                                                              depth_img_RT.shape[0],
                                                                              self.occlusion_threshold,
-                                                                             self.occlusion_kernel)
+                                                                             int(self.occlusion_kernel))
 
         return depth_img_no_occlusion_RT, deoccl_index_img.int()
 
@@ -211,12 +211,14 @@ class Data_preprocess:
 
             self.real_shape = [rgb.shape[1], rgb.shape[2], rgb.shape[0]]
 
-            R = mathutils.Quaternion(R_errs[idx].to(device)).to_matrix()
-            R.resize_4x4()
-            T = mathutils.Matrix.Translation(T_errs[idx].to(device))
-            RT = mathutils.Matrix(np.matmul(np.asarray(T), np.asarray(R)))
-
-            pc_rotated = rotate_back(pc, RT)    # Nx4
+            if T_errs is not None:
+                R = mathutils.Quaternion(R_errs[idx].to(device)).to_matrix()
+                R.resize_4x4()
+                T = mathutils.Matrix.Translation(T_errs[idx].to(device))
+                RT = mathutils.Matrix(np.matmul(np.asarray(T), np.asarray(R)))
+                pc_rotated = rotate_back(pc, RT)    # Nx4
+            else:
+                pc_rotated = pc
 
             cam_params = self.calibs[idx]
             cam_model = CameraModel()

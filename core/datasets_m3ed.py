@@ -12,7 +12,7 @@ from torch.utils.data import Dataset
 import torchvision.transforms.functional as F
 from core.utils_point import quaternion_from_matrix, invert_pose, rotate_forward, rotate_back
 
-def get_calib_kitti(sequence):
+def get_calib_m3ed(sequence):
     if sequence == "falcon_indoor_flight_1":
         return torch.tensor([1034.86278431, 1033.47800271, 629.70125104, 357.60071019])
     elif sequence in ["falcon_indoor_flight_2", "falcon_indoor_flight_3"]:
@@ -224,7 +224,7 @@ class DatasetM3ED(Dataset):
         R, T = invert_pose(R, T)
         R, T = torch.tensor(R), torch.tensor(T)
 
-        calib = get_calib_kitti(run)
+        calib = get_calib_m3ed(run)
         if h_mirror:
             calib[2] = event_frame.shape[2] - calib[2]
 

@@ -209,9 +209,9 @@ def test(args, TestImgLoader, model, device, cal_pose=False):
                     ax.scatter(*coordinate, color='r')
                 elif coordinate[0] >= 0 and coordinate[1] < 0:
                     ax.scatter(*coordinate, color='y')
-                RT_pred = torch.mm(RT_pred, RT_offset.inverse().to(RT_pred.device))
-                T_pred_offset = RT_pred[:3, 3]
-                R_pred_offset = quaternion_from_matrix(RT_pred)
+                RT_pred_offset = torch.mm(RT_pred, RT_offset.inverse().to(RT_pred.device))
+                T_pred_offset = RT_pred_offset[:3, 3]
+                R_pred_offset = quaternion_from_matrix(RT_pred_offset)
 
                 err_r, err_t = err_Pose(R_pred_offset, T_pred_offset, R_err[0], T_err[0])
                 err_r_list.append(err_r.item())
@@ -236,14 +236,25 @@ def test(args, TestImgLoader, model, device, cal_pose=False):
             flow_image = flow_to_image(flow_up.permute(0, 2, 3, 1).cpu().detach().numpy()[0])
             cv2.imwrite(f'./visualization/test/flow/{i_batch:05d}_flow.png', flow_image)
 
-            original_overlay = overlay_imgs(event_input[0, :, :, :]*0, lidar_input[0, 0, :, :])
+            original_overlay = overlay_imgs(event_input[0, :, :, :], lidar_input[0, 0, :, :])
             cv2.imwrite(f'./visualization/test/depth/{i_batch:05d}_depth_1_ori.png', original_overlay)
-            _, lidar_input_pred, _, _ = data_generate.push_input(event_frame, pc, [T_pred], [R_pred], device, split='test') 
-            pred_overlay = overlay_imgs(event_input[0, :, :, :]*0, lidar_input_pred[0, 0, :, :])
+            ##
+            R_pred_offset, T_pred_offset, R_err[0], T_err[0]
+            RT_inv = to_rotation_matrix(R_err[0], T_err[0])
+            RT_inv = RT_inv.to(device)
+            RT = RT_inv.clone().inverse()
+            RT_pred = to_rotation_matrix(R_pred_offset, T_pred_offset)
+            RT_pred = RT_pred.to(device)
+            RT_new = torch.mm(RT, RT_pred)
+            T_composed = RT_new[:3, 3]
+            R_composed = quaternion_from_matrix(RT_new)
+            ##
+            _, lidar_input_pred, _, _ = data_generate.push_input(event_frame, pc, [T_composed], [R_composed], device, split='test') 
+            pred_overlay = overlay_imgs(event_input[0, :, :, :], lidar_input_pred[0, 0, :, :])
             cv2.imwrite(f'./visualization/test/depth/{i_batch:05d}_depth_2_pred.png', pred_overlay)
-            _, lidar_input_offset, _, _ = data_generate.push_input(event_frame, pc, [T_pred_offset], [R_pred_offset], device, split='test') 
-            offset_overlay = overlay_imgs(event_input[0, :, :, :]*0, lidar_input_offset[0, 0, :, :])
-            cv2.imwrite(f'./visualization/test/depth/{i_batch:05d}_depth_3_offset.png', offset_overlay)
+            # _, lidar_input_offset, _, _ = data_generate.push_input(event_frame, pc, [T_pred_offset], [R_pred_offset], device, split='test') 
+            # offset_overlay = overlay_imgs(event_input[0, :, :, :]*0, lidar_input_offset[0, 0, :, :])
+            # cv2.imwrite(f'./visualization/test/depth/{i_batch:05d}_depth_3_offset.png', offset_overlay)
 
             cat_ori = np.hstack((vis_event_time_image, original_overlay))
 

@@ -13,7 +13,7 @@ from quaternion_distances import quaternion_distance
 
 import poselib
 
-def Flow2Pose(flow_up, depth, calib, flow_gt=None, uncertainty=None):
+def Flow2Pose(flow_up, depth, calib, flow_gt=None, uncertainty=None, flag=True):
     """
         flow_up: Bx2xHxW
         depth  : Bx1xHxW
@@ -52,7 +52,6 @@ def Flow2Pose(flow_up, depth, calib, flow_gt=None, uncertainty=None):
     cam_model = CameraModel()
     cam_params = calib[0].clone().cpu().numpy()
     x, y = 60, 160
-    # x, y = 100, 160
     cam_params[2] = cam_params[2] + 480 - (y + y + 960) / 2.
     cam_params[3] = cam_params[3] + 300 - (x + x + 600) / 2.
     cam_model.focal_length = cam_params[:2]
@@ -98,9 +97,10 @@ def Flow2Pose(flow_up, depth, calib, flow_gt=None, uncertainty=None):
     
     R = torch.tensor(pose.q)
     T = torch.tensor(pose.t)
-    R[1:] *= -1
-    T *= -1
-
+    # single localization
+    if flag:
+        R[1:] *= -1
+        T *= -1
 
     return R, T, indexes[inliers, :], False
 
