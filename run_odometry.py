@@ -236,11 +236,11 @@ def main(args):
 
         if args.render:
             original_overlay = overlay_imgs(event_input[0, :, :, :], lidar_input[0, 0, :, :])
-            cv2.imwrite(f"./visualization/{idx:05d}_0.png", original_overlay)
+            cv2.imwrite(f"./visualization/odometry/0_{idx:05d}.png", original_overlay)
             _, lidar_input, _, _ = data_generate.push_input([event_frame], [local_map], [T_pred_offset], [R_pred_offset], device, split='test')
             # event_frame = warp(event_frame.to(flow_up.device), flow_up.detach())
             original_overlay = overlay_imgs(event_input[0, :, :, :], lidar_input[0, 0, :, :])
-            cv2.imwrite(f"./visualization/{idx:05d}_1.png", original_overlay)
+            cv2.imwrite(f"./visualization/odometry/1_{idx:05d}.png", original_overlay)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
