@@ -48,6 +48,11 @@ def get_velo2cam_m3ed(sequence):
                              [-2.4484e-01,  2.3624e-02, -9.6928e-01, -2.1931e-01],
                              [ 9.6956e-01,  5.8579e-03, -2.4477e-01, -2.2846e-01],
                              [ 0.0000e+00,  0.0000e+00,  0.0000e+00,  1.0000e+00]])
+    elif sequence in ["spot_indoor_building_loop", "spot_indoor_obstacles"]:
+        return torch.tensor([[ 0.0025, -1.0000, -0.0020,  0.0599],
+                             [ 0.0125,  0.0021, -0.9999, -0.1898],
+                             [ 0.9999,  0.0025,  0.0125, -0.1584],
+                             [ 0.0000,  0.0000,  0.0000,  1.0000]])
     else:
         raise TypeError("Sequence Not Available")
 
@@ -151,7 +156,8 @@ def main(args):
     err_t_list = []
     err_r_list = []
     print('Start tracking using EVLoc...')
-    k = 71
+    k = 71  #falcon_indoor_flight_3
+    # k = 41  #spot_indoor_building_loop
     initial_T = Ln_T_L0[k+1][:3, 3]
     initial_R = quaternion_from_matrix(Ln_T_L0[k+1])
     est_rot.append(initial_R.to(device))

@@ -33,6 +33,11 @@ def get_left_right_T(sequence):
                              [ 6.6661e-04,  1.0000e+00,  1.3561e-04,  9.1033e-04],
                              [ 3.5102e-03, -1.3795e-04,  9.9999e-01, -4.3059e-04],
                              [ 0.0000e+00,  0.0000e+00,  0.0000e+00,  1.0000e+00]])
+    elif sequence in ["spot_indoor_building_loop", "spot_indoor_obstacles"]:
+        return torch.tensor([[ 9.9999e-01, -5.4043e-04, -3.8851e-03, -1.2024e-01],
+                             [ 5.3475e-04,  1.0000e+00, -1.4630e-03,  9.3071e-04],
+                             [ 3.8859e-03,  1.4609e-03,  9.9999e-01, -3.1356e-04],
+                             [ 0.0000e+00,  0.0000e+00,  0.0000e+00,  1.0000e+00]])
     else:
         raise TypeError("Sequence Not Available")
 

@@ -9,7 +9,7 @@ from utils_point import overlay_imgs
 
 root = f"/home/eason/WorkSpace/EventbasedVisualLocalization/preprocessed_dataset/M3ED"
 
-scene = "falcon_indoor_flight_1"
+scene = "spot_indoor_obstacles"
 data_path = os.path.join(root, scene)
 
 event_paths = os.path.join(data_path, "event_frames_ours_denoise_200000", 'left')
@@ -31,11 +31,11 @@ for idx in range(len(sequences)):
     event_time_image = (event_time_image / np.max(event_time_image) * 255).astype(np.uint8)
     cv2.imwrite(f"./visualization/{idx:05d}_event.png", event_time_image)
     
-    event_time_image = cv2.medianBlur(event_time_image, 3)
+    # event_time_image = cv2.medianBlur(event_time_image, 3)
     # event_time_image = cv2.GaussianBlur(event_time_image, (7,7), 0)
-    event_time_image_denoise = event_time_image
+    # event_time_image_denoise = event_time_image
     # event_time_image_denoise = cv2.bilateralFilter(event_time_image_denoise,9,255,255)
-    cv2.imwrite(f"./visualization/{idx:05d}_event_denoise_1.png", event_time_image_denoise)
+    # cv2.imwrite(f"./visualization/{idx:05d}_event_denoise_1.png", event_time_image_denoise)
     # # event_time_image_denoise = cv2.GaussianBlur(event_time_image_denoise, (7,7), 0)
     # # event_time_image_denoise = cv2.GaussianBlur(event_time_image_denoise, (5,5), 0)
     # event_time_image_denoise = cv2.morphologyEx(event_time_image_denoise, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
