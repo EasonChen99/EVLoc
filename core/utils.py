@@ -60,10 +60,9 @@ def fetch_optimizer(args, nums, model):
     """ Create the optimizer and learning rate scheduler """
     optimizer = optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.wdecay, eps=args.epsilon)
 
-    # scheduler = optim.lr_scheduler.OneCycleLR(optimizer, args.lr, args.num_steps+100,
-    #     pct_start=0.05, cycle_momentum=False, anneal_strategy='linear')
-    scheduler = optim.lr_scheduler.OneCycleLR(optimizer, args.lr, args.epochs * nums + 100,
-                                              pct_start=0.05, cycle_momentum=False, anneal_strategy='linear')
+    # scheduler = optim.lr_scheduler.OneCycleLR(optimizer, args.lr, args.epochs * nums + 100,
+    #                                           pct_start=0.05, cycle_momentum=False, anneal_strategy='linear')
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=args.epochs * nums + 100, gamma=0.1)
     return optimizer, scheduler
 
 

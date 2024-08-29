@@ -118,7 +118,7 @@ class Data_preprocess:
         return displacement
     
 
-    def push(self, rgbs, pcs, T_errs, R_errs, device, split='train'):
+    def push(self, rgbs, pcs, T_errs, R_errs, device, MAX_DEPTH=10., split='train'):
         lidar_input = []
         rgb_input = []
         flow_gt = []
@@ -175,7 +175,7 @@ class Data_preprocess:
             depth_img_no_occlusion_RT_training, indexes_uvRT_deoccl_training = \
                 self.gen_depth_img(uv_RT, depth_RT, VI_indexes_RT[VI_indexes_RT], cam_params)
 
-            depth_img_no_occlusion_RT_training /= 10.
+            depth_img_no_occlusion_RT_training /= MAX_DEPTH
 
             depth_img_no_occlusion_RT_training = depth_img_no_occlusion_RT_training.unsqueeze(0)
 
@@ -199,7 +199,7 @@ class Data_preprocess:
         return rgb_input, lidar_input, flow_gt
     
 
-    def push_input(self, rgbs, pcs, T_errs, R_errs, device, split='train'):
+    def push_input(self, rgbs, pcs, T_errs, R_errs, device, MAX_DEPTH=10., split='train'):
         lidar_input = []
         rgb_input = []
         x_list = []
@@ -233,7 +233,7 @@ class Data_preprocess:
             depth_img_no_occlusion_RT_training, _ = \
                 self.gen_depth_img(uv_RT, depth_RT, VI_indexes_RT[VI_indexes_RT], cam_params)
 
-            depth_img_no_occlusion_RT_training /= 10.
+            depth_img_no_occlusion_RT_training /= MAX_DEPTH
 
             depth_img_no_occlusion_RT_training = depth_img_no_occlusion_RT_training.unsqueeze(0)
 
@@ -324,7 +324,7 @@ class Data_preprocess:
         return flow_gt
 
 
-    def push_depth_gt(self, rgbs, pcs, x_list, y_list, device, offsets=None, downsample=None):
+    def push_depth_gt(self, rgbs, pcs, x_list, y_list, device, MAX_DEPTH=10., offsets=None, downsample=None):
         lidar_depths = []
 
         for idx in range(len(rgbs)):
@@ -359,7 +359,7 @@ class Data_preprocess:
             ## make depth_image for training
             depth_img_no_occlusion_RT_training, _ = \
                 self.gen_depth_img(uv_RT, depth_RT, VI_indexes_RT[VI_indexes_RT], cam_params)
-            depth_img_no_occlusion_RT_training /= 10.
+            depth_img_no_occlusion_RT_training /= MAX_DEPTH
             depth_img_no_occlusion_RT_training = depth_img_no_occlusion_RT_training.unsqueeze(0)
 
 

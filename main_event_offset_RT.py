@@ -68,7 +68,7 @@ def train(args, TrainImgLoader, model, optimizer, scheduler, scaler, logger, dev
         R_err = sample['rot_error']
     
         data_generate = Data_preprocess(calib, occlusion_threshold, occlusion_kernel)
-        event_input, lidar_input, x_list, y_list = data_generate.push_input(event_frame, pc, T_err, R_err, device, split='train')
+        event_input, lidar_input, x_list, y_list = data_generate.push_input(event_frame, pc, T_err, R_err, device, MAX_DEPTH=args.max_depth, split='train')
 
         vis_event_time_image = event_input[0,...].permute(1, 2, 0).cpu().numpy()
         if vis_event_time_image.shape[2] == 1:
@@ -170,7 +170,7 @@ def test(args, TestImgLoader, model, device, cal_pose=False):
         R_err = sample['rot_error']
 
         data_generate = Data_preprocess(calib, occlusion_threshold, occlusion_kernel)
-        event_input, lidar_input, flow_gt = data_generate.push(event_frame, pc, T_err, R_err, device, split='test')
+        event_input, lidar_input, flow_gt = data_generate.push(event_frame, pc, T_err, R_err, device, MAX_DEPTH=args.max_depth, split='test')
         
         end = time.time()
         _, flow_up, offset_R, offset_T = model(lidar_input, event_input, iters=24, test_mode=True)
@@ -188,7 +188,7 @@ def test(args, TestImgLoader, model, device, cal_pose=False):
         out_list.append(out[val].cpu().numpy())
 
         if cal_pose:
-            R_pred, T_pred, inliers, flag = Flow2Pose(flow_up, lidar_input, calib)
+            R_pred, T_pred, inliers, flag = Flow2Pose(flow_up, lidar_input, calib, MAX_DEPTH=args.max_depth)
 
             Time += time.time() - end
             if flag:
@@ -238,7 +238,6 @@ def test(args, TestImgLoader, model, device, cal_pose=False):
 
             original_overlay = overlay_imgs(event_input[0, :, :, :], lidar_input[0, 0, :, :])
             cv2.imwrite(f'./visualization/test/depth/{i_batch:05d}_depth_1_ori.png', original_overlay)
-            ##
             R_pred_offset, T_pred_offset, R_err[0], T_err[0]
             RT_inv = to_rotation_matrix(R_err[0], T_err[0])
             RT_inv = RT_inv.to(device)
@@ -248,7 +247,6 @@ def test(args, TestImgLoader, model, device, cal_pose=False):
             RT_new = torch.mm(RT, RT_pred)
             T_composed = RT_new[:3, 3]
             R_composed = quaternion_from_matrix(RT_new)
-            ##
             _, lidar_input_pred, _, _ = data_generate.push_input(event_frame, pc, [T_composed], [R_composed], device, split='test') 
             pred_overlay = overlay_imgs(event_input[0, :, :, :], lidar_input_pred[0, 0, :, :])
             cv2.imwrite(f'./visualization/test/depth/{i_batch:05d}_depth_2_pred.png', pred_overlay)
@@ -258,8 +256,7 @@ def test(args, TestImgLoader, model, device, cal_pose=False):
 
             cat_ori = np.hstack((vis_event_time_image, original_overlay))
 
-            original_overlay = overlay_imgs(event_input[0, :, :, :], lidar_input[0, 0, :, :])
-            cat_pre = np.hstack((original_overlay, flow_image))
+            cat_pre = np.hstack((pred_overlay, flow_image))
             cat = np.vstack((cat_ori, cat_pre))
 
             # error smaller, pixel brighter
@@ -392,6 +389,9 @@ if __name__ == '__main__':
     parser.add_argument('--max_t', 
                         type=float, 
                         default=0.5)
+    parser.add_argument('--max_depth', 
+                        type=float, 
+                        default=10.)
     parser.add_argument('--num_workers', 
                         type=int, 
                         default=3)
@@ -409,8 +409,6 @@ if __name__ == '__main__':
                         action='store_true',
                         help='evaluate model on validation set')
     parser.add_argument('--render', 
-                        action='store_true')
-    parser.add_argument('--edge', 
                         action='store_true')
     args = parser.parse_args()    
 

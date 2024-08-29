@@ -17,8 +17,18 @@ def get_calib_m3ed(sequence):
         return torch.tensor([1034.86278431, 1033.47800271, 629.70125104, 357.60071019])
     elif sequence in ["falcon_indoor_flight_2", "falcon_indoor_flight_3"]:
         return torch.tensor([1034.39696079, 1034.73607278, 636.27410756, 364.73952748])
+    elif sequence in ['falcon_outdoor_day_penno_parking_1', 'falcon_outdoor_day_penno_parking_2']:
+        return torch.tensor([1033.22781771, 1032.05548869, 631.84536312, 360.7175681])
+    elif sequence in ['falcon_outdoor_night_penno_parking_1', 'falcon_outdoor_night_penno_parking_2']:
+        return torch.tensor([1034.61302587, 1034.83604567, 638.12992827, 366.88002829])
     elif sequence in ['spot_indoor_building_loop', 'spot_indoor_obstacles', 'spot_indoor_stairs']:
         return torch.tensor([1032.0231, 1031.9229,  635.7985,  363.7983])
+    elif sequence in ['spot_outdoor_day_srt_under_bridge_1']:
+        return torch.tensor([1030.29161359, 1030.9024083, 634.79835424, 368.11576903])
+    elif sequence in ['car_urban_day_penno_small_loop']:
+        return torch.tensor([1031.36879978, 1031.06491961, 634.87768084, 367.62546105])
+    elif sequence in ['car_urban_night_penno_small_loop']:
+        return torch.tensor([1030.46186128, 1029.51180204, 635.69022466, 364.32444857])
     else:
         raise TypeError("Sequence Not Available")
 
@@ -33,10 +43,35 @@ def get_left_right_T(sequence):
                              [ 6.6661e-04,  1.0000e+00,  1.3561e-04,  9.1033e-04],
                              [ 3.5102e-03, -1.3795e-04,  9.9999e-01, -4.3059e-04],
                              [ 0.0000e+00,  0.0000e+00,  0.0000e+00,  1.0000e+00]])
+    elif sequence in ['falcon_outdoor_day_penno_parking_1', 'falcon_outdoor_day_penno_parking_2']:
+        return torch.tensor([[ 9.9999e-01, -3.8986e-04, -3.2093e-03, -1.2005e-01],
+                             [ 3.8672e-04,  1.0000e+00, -9.8024e-04,  9.3651e-04],
+                             [ 3.2097e-03,  9.7899e-04,  9.9999e-01,  3.4862e-04],
+                             [ 0.0000e+00,  0.0000e+00,  0.0000e+00,  1.0000e+00]])
+    elif sequence in ['falcon_outdoor_night_penno_parking_1', 'falcon_outdoor_night_penno_parking_2']:
+        return torch.tensor([[ 9.9999e-01, -6.6613e-04, -3.5103e-03, -1.2018e-01],
+                             [ 6.6661e-04,  1.0000e+00,  1.3561e-04,  9.1033e-04],
+                             [ 3.5102e-03, -1.3795e-04,  9.9999e-01, -4.3059e-04],
+                             [ 0.0000e+00,  0.0000e+00,  0.0000e+00,  1.0000e+00]])
     elif sequence in ["spot_indoor_building_loop", "spot_indoor_obstacles"]:
         return torch.tensor([[ 9.9999e-01, -5.4043e-04, -3.8851e-03, -1.2024e-01],
                              [ 5.3475e-04,  1.0000e+00, -1.4630e-03,  9.3071e-04],
                              [ 3.8859e-03,  1.4609e-03,  9.9999e-01, -3.1356e-04],
+                             [ 0.0000e+00,  0.0000e+00,  0.0000e+00,  1.0000e+00]])
+    elif sequence in ['spot_outdoor_day_srt_under_bridge_1']:
+        return torch.tensor([[ 9.9999e-01, -6.4771e-04, -3.6507e-03, -1.2011e-01],
+                             [ 6.3675e-04,  1.0000e+00, -3.0024e-03,  8.7946e-04],
+                             [ 3.6526e-03,  3.0000e-03,  9.9999e-01, -2.8266e-04],
+                             [ 0.0000e+00,  0.0000e+00,  0.0000e+00,  1.0000e+00]])
+    elif sequence in ['car_urban_day_penno_small_loop']:
+        return torch.tensor([[ 9.9999e-01, -7.5328e-04, -3.4030e-03, -1.2022e-01],
+                             [ 7.4723e-04,  1.0000e+00, -1.7777e-03,  9.0584e-04],
+                             [ 3.4043e-03,  1.7752e-03,  9.9999e-01, -1.1366e-04],
+                             [ 0.0000e+00,  0.0000e+00,  0.0000e+00,  1.0000e+00]])
+    elif sequence in ['car_urban_night_penno_small_loop']:
+        return torch.tensor([[ 1.0000e+00, -6.0816e-04, -2.7575e-03, -1.2019e-01],
+                             [ 6.0945e-04,  1.0000e+00,  4.6747e-04,  1.0605e-03],
+                             [ 2.7572e-03, -4.6915e-04,  1.0000e+00,  1.0729e-04],
                              [ 0.0000e+00,  0.0000e+00,  0.0000e+00,  1.0000e+00]])
     else:
         raise TypeError("Sequence Not Available")
@@ -57,11 +92,14 @@ class DatasetM3ED(Dataset):
 
         self.all_files = []
         
-        scene_list = ['falcon_indoor_flight_1', 
-                      'falcon_indoor_flight_2', 
-                      'falcon_indoor_flight_3', 
-                    #   'spot_indoor_building_loop', 
-                    #   'spot_indoor_obstacles',
+        scene_list = [
+                    #   'falcon_indoor_flight_1', 
+                    #   'falcon_indoor_flight_2', 
+                    #   'falcon_indoor_flight_3', 
+                      'falcon_outdoor_day_penno_parking_1',
+                      'falcon_outdoor_day_penno_parking_2',
+                    #   'falcon_outdoor_night_penno_parking_1',
+                    #   'falcon_outdoor_night_penno_parking_2',
                      ]
         
         for dir in scene_list:
@@ -78,14 +116,11 @@ class DatasetM3ED(Dataset):
                         continue
                     if not os.path.exists(os.path.join(self.root_dir, dir, f"event_frames_{self.method}_{self.ran}_{self.suffix}", 'left', f"event_frame_{idx:05d}"+'.npy')):
                         continue
-                    # if not os.path.exists(os.path.join(self.root_dir, dir, f"event_frames_{self.method}_{self.ran}_{self.suffix}", 'right', f"event_frame_{idx:05d}"+'.npy')):
-                    #     continue
                     if dir == test_sequence and split.startswith('test'):
                         self.all_files.append(os.path.join(dir, f"event_frames_{self.method}_{self.ran}_{self.suffix}", 'left', f"{idx:05d}"))
-                        # self.all_files.append(os.path.join(dir, f"event_frames_{self.method}_{self.ran}_{self.suffix}", 'right', f"{idx:05d}"))
                     elif (not dir == test_sequence) and split == 'train':
                         self.all_files.append(os.path.join(dir, f"event_frames_{self.method}_{self.ran}_{self.suffix}", 'left', f"{idx:05d}"))
-                        self.all_files.append(os.path.join(dir, f"event_frames_{self.method}_{self.ran}_{self.suffix}", 'right', f"{idx:05d}"))
+                        # self.all_files.append(os.path.join(dir, f"event_frames_{self.method}_{self.ran}_{self.suffix}", 'right', f"{idx:05d}"))
                     
                     R = quaternion_from_matrix(torch.tensor(Ln_T_L0[idx]))
                     T = Ln_T_L0[idx][:3, 3]

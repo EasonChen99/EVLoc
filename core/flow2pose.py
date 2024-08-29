@@ -13,7 +13,7 @@ from quaternion_distances import quaternion_distance
 
 import poselib
 
-def Flow2Pose(flow_up, depth, calib, flow_gt=None, uncertainty=None, flag=True):
+def Flow2Pose(flow_up, depth, calib, flow_gt=None, uncertainty=None, MAX_DEPTH=10., flag=True):
     """
         flow_up: Bx2xHxW
         depth  : Bx1xHxW
@@ -39,7 +39,7 @@ def Flow2Pose(flow_up, depth, calib, flow_gt=None, uncertainty=None, flag=True):
     pred_depth_img[pred_depth_img == 1000.] = 0.
     pc_project_uv = output.cpu().permute(0, 2, 3, 1).numpy()
 
-    depth_img_ori = depth.cpu().numpy() * 10.
+    depth_img_ori = depth.cpu().numpy() * MAX_DEPTH
 
     mask_depth_1 = pc_project_uv[0, :, :, 0] != 0
     mask_depth_2 = pc_project_uv[0, :, :, 1] != 0
