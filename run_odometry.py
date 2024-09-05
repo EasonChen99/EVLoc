@@ -63,7 +63,7 @@ def get_velo2cam_m3ed(sequence):
                              [ 0.0125,  0.0021, -0.9999, -0.1898],
                              [ 0.9999,  0.0025,  0.0125, -0.1584],
                              [ 0.0000,  0.0000,  0.0000,  1.0000]])
-    elif sequence in ['spot_outdoor_day_srt_under_bridge_1']:
+    elif sequence in ['spot_outdoor_day_srt_under_bridge_1', 'spot_outdoor_day_srt_under_bridge_2']:
         return torch.tensor([[ 2.8731e-03, -9.9999e-01, -1.6354e-03,  5.9817e-02],
                              [-2.7785e-04,  1.6346e-03, -1.0000e+00, -1.8998e-01],
                              [ 1.0000e+00,  2.8735e-03, -2.7315e-04, -1.5884e-01],
@@ -164,7 +164,7 @@ def main(args):
     err_r_list = []
     print('Start tracking using EVLoc...')
     # k = 71  #falcon_indoor_flight_3
-    k = 100
+    k = 130
     initial_T = Ln_T_L0[k+1][:3, 3]
     initial_R = quaternion_from_matrix(Ln_T_L0[k+1])
     est_rot.append(initial_R.to(device))

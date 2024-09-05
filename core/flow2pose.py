@@ -13,7 +13,7 @@ from quaternion_distances import quaternion_distance
 
 import poselib
 
-def Flow2Pose(flow_up, depth, calib, flow_gt=None, uncertainty=None, MAX_DEPTH=10., flag=True):
+def Flow2Pose(flow_up, depth, calib, flow_gt=None, uncertainty=None, x=60, y=160, h=600, w=960, MAX_DEPTH=10., flag=True):
     """
         flow_up: Bx2xHxW
         depth  : Bx1xHxW
@@ -51,9 +51,9 @@ def Flow2Pose(flow_up, depth, calib, flow_gt=None, uncertainty=None, MAX_DEPTH=1
 
     cam_model = CameraModel()
     cam_params = calib[0].clone().cpu().numpy()
-    x, y = 60, 160
-    cam_params[2] = cam_params[2] + 480 - (y + y + 960) / 2.
-    cam_params[3] = cam_params[3] + 300 - (x + x + 600) / 2.
+    x, y = x, y
+    cam_params[2] = cam_params[2] + w / 2. - (y + y + w) / 2.
+    cam_params[3] = cam_params[3] + h / 2. - (x + x + h) / 2.
     cam_model.focal_length = cam_params[:2]
     cam_model.principal_point = cam_params[2:]
     cam_mat = np.array([[cam_params[0], 0, cam_params[2]], [0, cam_params[1], cam_params[3]], [0, 0, 1.]])
@@ -62,17 +62,8 @@ def Flow2Pose(flow_up, depth, calib, flow_gt=None, uncertainty=None, MAX_DEPTH=1
     if pts3d.shape[0] < 4:
         return 0, 0, np.zeros([1, 2], dtype=np.uint8), True
     
-    # _, rvecs, tvecs, inliers = cv2.solvePnPRansac(pts3d, pts2d, cam_mat, None)
-    # # print("inlier rate:", inliers.shape[0] / pts3d.shape[0])
-    # reuler = rotation_vector_to_euler(rvecs)
-    # R = mathutils.Euler((reuler[0], reuler[1], reuler[2]), 'XYZ')
-    # T = mathutils.Vector((tvecs[0], tvecs[1], tvecs[2]))
-    # R, T = invert_pose(R, T)
-    # R, T = torch.tensor(R), torch.tensor(T)
-    # print(R, '\n', T)
-
     camera = {'model': 'SIMPLE_PINHOLE', 
-              'width': 960, 'height': 600, 
+              'width': w, 'height': h, 
               'params': [cam_params[0], cam_params[2], cam_params[3]]}
     pose, inliers = poselib.estimate_absolute_pose(pts2d, pts3d, camera, 
                                                 {

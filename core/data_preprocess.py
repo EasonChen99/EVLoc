@@ -87,38 +87,38 @@ class Data_preprocess:
 
         return project_delta_P
 
-    def DownsampleCrop_M3ED_delta(self, img, depth, displacement, split):
+    def DownsampleCrop_M3ED_delta(self, img, depth, displacement, split, h=600, w=960):
         if split == 'train':
-            x = np.random.randint(0, img.shape[1] - 600)
-            y = np.random.randint(0, img.shape[2] - 960)
+            x = np.random.randint(0, img.shape[1] - h)
+            y = np.random.randint(0, img.shape[2] - w)
         else:
-            x = (img.shape[1] - 600) // 2
-            y = (img.shape[2] - 960) // 2
-        img = img[:, x:x + 600, y:y + 960]
-        depth = depth[:, x:x + 600, y:y + 960]
-        displacement = displacement[:, x:x + 600, y:y + 960]
+            x = (img.shape[1] - h) // 2
+            y = (img.shape[2] - w) // 2
+        img = img[:, x:x + h, y:y + w]
+        depth = depth[:, x:x + h, y:y + w]
+        displacement = displacement[:, x:x + h, y:y + w]
         return img, depth, displacement
     
-    def DownsampleCrop_input(self, img, depth, split):
+    def DownsampleCrop_input(self, img, depth, split, h=600, w=960):
         if split == 'train':
-            x = np.random.randint(0, img.shape[1] - 600)
-            y = np.random.randint(0, img.shape[2] - 960)
+            x = np.random.randint(0, img.shape[1] - h)
+            y = np.random.randint(0, img.shape[2] - w)
         else:
-            x = (img.shape[1] - 600) // 2
-            y = (img.shape[2] - 960) // 2
-        img = img[:, x:x + 600, y:y + 960]
-        depth = depth[:, x:x + 600, y:y + 960]
+            x = (img.shape[1] - h) // 2
+            y = (img.shape[2] - w) // 2
+        img = img[:, x:x + h, y:y + w]
+        depth = depth[:, x:x + h, y:y + w]
         return img, depth, x, y
     
-    def DownsampleCrop_flow(self, displacement, x, y, downsample=None):
+    def DownsampleCrop_flow(self, displacement, x, y, downsample=None, h=600, w=960):
         if downsample is not None:
-            displacement = displacement[:, x:x + 600//downsample, y:y + 960//downsample]
+            displacement = displacement[:, x:x + h//downsample, y:y + w//downsample]
         else:
-            displacement = displacement[:, x:x + 600, y:y + 960]
+            displacement = displacement[:, x:x + h, y:y + w]
         return displacement
     
 
-    def push(self, rgbs, pcs, T_errs, R_errs, device, MAX_DEPTH=10., split='train'):
+    def push(self, rgbs, pcs, T_errs, R_errs, device, MAX_DEPTH=10., h=600, w=960, split='train'):
         lidar_input = []
         rgb_input = []
         flow_gt = []
@@ -186,7 +186,7 @@ class Data_preprocess:
 
             ## downsample and crop
             rgb, depth_img_no_occlusion_RT_training, project_delta_P \
-                = self.DownsampleCrop_M3ED_delta(rgb, depth_img_no_occlusion_RT_training, project_delta_P, split)
+                = self.DownsampleCrop_M3ED_delta(rgb, depth_img_no_occlusion_RT_training, project_delta_P, split, h=h, w=w)
 
             rgb_input.append(rgb)
             lidar_input.append(depth_img_no_occlusion_RT_training)

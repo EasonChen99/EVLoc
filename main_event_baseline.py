@@ -10,7 +10,8 @@ import torch
 
 import visibility
 
-from core.datasets_m3ed import DatasetM3ED
+# from core.datasets_m3ed import DatasetM3ED as Dataset
+from core.datasets_mvsec import DatasetMVSEC as Dataset
 from core.backbone import Backbone_Event
 from core.utils import (count_parameters, merge_inputs, fetch_optimizer, Logger, remove_noise)
 from core.utils_point import (overlay_imgs, to_rotation_matrix, quaternion_from_matrix)
@@ -113,8 +114,8 @@ def test(args, TestImgLoader, model, device, cal_pose=False):
         R_err = sample['rot_error']
 
         data_generate = Data_preprocess(calib, occlusion_threshold, occlusion_kernel)
-        event_input, lidar_input, flow_gt = data_generate.push(event_frame, pc, T_err, R_err, device, split='test')
-        
+        event_input, lidar_input, flow_gt = data_generate.push(event_frame, pc, T_err, R_err, device, split='test', h=240, w=320)
+            
         end = time.time()
         _, flow_up = model(lidar_input, event_input, iters=24, test_mode=True)
 
@@ -131,7 +132,8 @@ def test(args, TestImgLoader, model, device, cal_pose=False):
         out_list.append(out[val].cpu().numpy())
 
         if cal_pose:
-            R_pred, T_pred, inliers, flag = Flow2Pose(flow_up, lidar_input, calib)
+            # R_pred, T_pred, inliers, flag = Flow2Pose(flow_up, lidar_input, calib)
+            R_pred, T_pred, inliers, flag = Flow2Pose(flow_up, lidar_input, calib, x=10, y=13, h=240, w=320)
 
             Time += time.time() - end
             if flag:
@@ -326,7 +328,7 @@ if __name__ == '__main__':
     def init_fn(x):
         return _init_fn(x, seed)
 
-    dataset_test = DatasetM3ED(args.data_path,
+    dataset_test = Dataset(args.data_path,
                                args.suffix, 
                                args.method,
                                args.ran,
@@ -351,7 +353,7 @@ if __name__ == '__main__':
             print(f"Outliers number {len(outliers)}/{len(TestImgLoader)} {outliers}")
         sys.exit()
 
-    dataset_train = DatasetM3ED(args.data_path,
+    dataset_train = Dataset(args.data_path,
                                 args.suffix, 
                                 args.method,
                                 args.ran,
