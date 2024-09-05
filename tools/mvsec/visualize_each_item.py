@@ -7,8 +7,9 @@ import cv2
 import torch
 from utils import depth_generation
 from utils_point import overlay_imgs
+import tqdm
 
-def get_calib_m3ed(sequence):
+def get_calib(sequence):
     if sequence == "falcon_indoor_flight_1":
         return torch.tensor([1034.86278431, 1033.47800271, 629.70125104, 357.60071019])
     elif sequence in ["falcon_indoor_flight_2", "falcon_indoor_flight_3"]:
@@ -25,6 +26,8 @@ def get_calib_m3ed(sequence):
         return torch.tensor([1031.36879978, 1031.06491961, 634.87768084, 367.62546105])
     elif sequence in ['car_urban_night_penno_small_loop']:
         return torch.tensor([1030.46186128, 1029.51180204, 635.69022466, 364.32444857])
+    elif sequence in ['indoor_flying1', 'indoor_flying2', 'indoor_flying3', 'indoor_flying4']:
+        return torch.tensor([199.65301231, 199.65301231, 177.43276376, 126.81215684])
     else:
         raise TypeError("Sequence Not Available")
 
@@ -69,13 +72,18 @@ def get_left_right_T(sequence):
                              [ 6.0945e-04,  1.0000e+00,  4.6747e-04,  1.0605e-03],
                              [ 2.7572e-03, -4.6915e-04,  1.0000e+00,  1.0729e-04],
                              [ 0.0000e+00,  0.0000e+00,  0.0000e+00,  1.0000e+00]])
+    elif sequence in ['indoor_flying1', 'indoor_flying2', 'indoor_flying3', 'indoor_flying4']:
+        return torch.tensor([[0.9999285439274112, 0.011088072985503046, -0.004467849222081981, -0.09988137641750752],
+                             [-0.011042817783611191, 0.9998887260774646, 0.01002953830336461, -0.0003927067773089277],
+                             [0.004578560319692358, -0.009979483987103495, 0.9999397215256256, 1.8880107752680777e-06],
+                             [0.0, 0.0, 0.0, 1.0]])
     else:
         raise TypeError("Sequence Not Available")
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset", 
-                    default="/home/eason/WorkSpace/EventbasedVisualLocalization/preprocessed_dataset/M3ED",
+                    default="/home/eason/WorkSpace/EventbasedVisualLocalization/preprocessed_dataset/MVSEC",
                     help="Root path to the dataset", 
                     type=str)
     ap.add_argument("--sequence",
@@ -99,7 +107,7 @@ if __name__ == '__main__':
 
 
     sequences = sorted(glob.glob(f"{event_paths}/*.npy"))
-    for idx in range(len(sequences)):
+    for idx in tqdm.tqdm(range(len(sequences))):
         event_path = sequences[idx]
         sequence = event_path.split('/')[-1].split('_')[-1].split('.')[0]
         pc_path = os.path.join(pc_paths, f'point_cloud_{int(sequence)+1:05d}.h5')
@@ -109,7 +117,6 @@ if __name__ == '__main__':
         event_time_image[event_time_image<0]=0
         event_time_image = np.concatenate((np.zeros([event_time_image.shape[0], event_time_image.shape[1], 1]), event_time_image), axis=2)
         event_time_image = (event_time_image / np.max(event_time_image) * 255).astype(np.uint8)
-        # event_time_image = event_time_image[60:660, 160:960+160, :]
         cv2.imwrite(f"./visualization/{idx:05d}_event.png", event_time_image)
         
         try:
@@ -132,11 +139,10 @@ if __name__ == '__main__':
             T_to_prophesee_left = get_left_right_T(args.sequence)
             pc_in = torch.matmul(T_to_prophesee_left, pc_in)
 
-        calib = get_calib_m3ed(args.sequence)
+        calib = get_calib(args.sequence)
         calib = calib.cuda().float()
-        sparse_depth = depth_generation(pc_in.cuda(), (720, 1280), calib, 3., 5, device='cuda:0')
+        sparse_depth = depth_generation(pc_in.cuda(), (260, 346), calib, 3., 5, device='cuda:0')
         sparse_depth = overlay_imgs(sparse_depth.repeat(3, 1, 1)*0, sparse_depth[0, ...])
-        # sparse_depth = sparse_depth[60:660, 160:960+160, :]
         cv2.imwrite(f"./visualization/{idx:05d}_depth.png", sparse_depth)
 
         # ## denoise

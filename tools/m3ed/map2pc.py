@@ -33,6 +33,8 @@ if __name__ == '__main__':
         os.mkdir(out_path)
 
     data = h5py.File(data_path,'r')
+    prophesee_left_T_lidar = torch.tensor(data["/ouster/calib/T_to_prophesee_left"], device=device, dtype=torch.float32)
+    # print(prophesee_left_T_lidar) 
 
     # # pose load
     poses = h5py.File(pose_path,'r')
@@ -46,17 +48,28 @@ if __name__ == '__main__':
     print(f'load pointclouds finished! {vox_map.shape[1]} points')
 
     for idx in tqdm.tqdm(range(Ln_T_L0.shape[0]-1)):
+        file = os.path.join(out_path, f'point_cloud_{idx:05d}.h5')
+        if os.path.exists(file):
+            continue
         pose = torch.tensor(Ln_T_L0[idx], device=device, dtype=torch.float32)
         local_map = vox_map.clone()
         local_map = torch.matmul(pose, local_map)
         indexes = local_map[0, :] > -1.
-        indexes = indexes & (local_map[0, :] < 10.)
-        indexes = indexes & (local_map[1, :] > -5.)
-        indexes = indexes & (local_map[1, :] < 5.)
+        
+        # indexes = indexes & (local_map[0, :] < 10.)
+        # indexes = indexes & (local_map[1, :] > -5.)
+        # indexes = indexes & (local_map[1, :] < 5.)
+
+        # indexes = indexes & (local_map[0, :] < 100.)
+        # indexes = indexes & (local_map[1, :] > -25.)
+        # indexes = indexes & (local_map[1, :] < 25.)
+        
+        indexes = indexes & (local_map[0, :] < 50.)
+        indexes = indexes & (local_map[1, :] > -15.)
+        indexes = indexes & (local_map[1, :] < 15.)
+        
         local_map = local_map[:, indexes]
-        prophesee_left_T_lidar = torch.tensor(data["/ouster/calib/T_to_prophesee_left"], device=device, dtype=torch.float32)
         local_map = torch.matmul(prophesee_left_T_lidar, local_map)
 
-        file = os.path.join(out_path, f'point_cloud_{idx:05d}.h5')
         with h5py.File(file, 'w') as hf:
             hf.create_dataset('PC', data=local_map.cpu().half(), compression='lzf', shuffle=True)

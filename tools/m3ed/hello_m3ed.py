@@ -13,19 +13,27 @@ import argparse
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser()
+    args.add_argument("--dataset", 
+                    default="/media/eason/e835c718-d773-44a1-9ca4-881204d9b53d/Datasets/M3ED/original/Falcon/Indoor/flight_3",
+                    help="Root path to the dataset", 
+                    type=str)
+    args.add_argument("--sequence",
+                    default="falcon_indoor_flight_3",
+                    help="Sequence name for processing",
+                    type=str)
     args.add_argument("--method",
                     default="TS",
                     help="Event representation method",
                     type=str)
     args.add_argument("--idx",
-                    default=100,
+                    default=200,
                     type=int)
     args = args.parse_args()
 
     device = torch.device(f"cuda:0" if torch.cuda.is_available() else "cpu")
 
-    name = "falcon_indoor_flight_1"
-    root = "/media/eason/e835c718-d773-44a1-9ca4-881204d9b53d/Datasets/M3ED/Falcon/Indoor/flight_1"
+    root = args.dataset
+    name = args.sequence
     h5_file = f"{name}_data.h5"
     pose_file = f"{name}_depth_gt.h5"
     pc_file = f"{name}_global.pcd"
@@ -36,9 +44,10 @@ if __name__ == '__main__':
 
     data = h5py.File(data_path,'r')
     rgb_data = load_data(data, sensor='ovc', camera='rgb') 
-    rgbs = rgb_data['rgb'][:]
+    rgbs = rgb_data['img'][:]
     rgb_ts = rgb_data['ts'][:]
-    event_data = load_data(data, sensor='prophesee', camera='left')
+    event_data = load_data(data, sensor='prophesee', camera='right')
+    T_to_prophesee_left = torch.tensor(event_data['T_to_prophesee_left'])
     # # pose load
     poses = h5py.File(pose_path,'r')
     depths = poses['depth/prophesee/left']
@@ -229,98 +238,98 @@ if __name__ == '__main__':
     event_time_image_disp = np.concatenate((np.zeros([event_time_image.shape[0], event_time_image.shape[1], 1]), event_time_image), axis=2)
     event_time_image_disp = (event_time_image_disp / np.max(event_time_image_disp) * 255).astype(np.uint8)
     cv2.imwrite(f'./event_frame_{args.method}.png', event_time_image_disp)
-    event_time_image_denoise = event_time_image_disp
-    event_time_image_denoise = cv2.medianBlur(event_time_image_disp, 3)
-    # event_time_image_denoise = cv2.bilateralFilter(event_time_image_disp, 9, 150, 150)
-    # event_time_image_denoise = cv2.GaussianBlur(event_time_image_denoise, (7,7), 0)
-    # event_time_image_denoise = cv2.GaussianBlur(event_time_image_denoise, (5,5), 0)
-    # R = 3
-    # threshold = 0.3
-    # valid = (event_time_image_denoise[:, :, 1] > 0) | (event_time_image_denoise[:, :, 2] > 0)
-    # valid_pixel_y, valid_pixel_x = np.where(valid)
-    # mask = np.zeros((rows, cols), dtype=bool)
-    # for y, x in zip(valid_pixel_y, valid_pixel_x):
-    #     patch = event_time_image_denoise[max(0, y-r):y+r+1, max(0, x-r):x+r+1, :]
-    #     valid_count = ((patch[:, :, 1] > 0) | (patch[:, :, 2] > 0)).sum()
-    #     if valid_count / (patch.shape[0]*patch.shape[1]) < threshold:
-    #         mask[y, x] = True
-    # event_time_image_denoise[mask] *= 0
-    # event_time_image_denoise = cv2.medianBlur(event_time_image_denoise, 3)
-    event_time_image_denoise = (event_time_image_denoise / np.max(event_time_image_denoise) * 255).astype(np.uint8)
-    cv2.imwrite(f'./event_frame_{args.method}_denoise.png', event_time_image_denoise)
+    # event_time_image_denoise = event_time_image_disp
+    # event_time_image_denoise = cv2.medianBlur(event_time_image_disp, 3)
+    # # event_time_image_denoise = cv2.bilateralFilter(event_time_image_disp, 9, 150, 150)
+    # # event_time_image_denoise = cv2.GaussianBlur(event_time_image_denoise, (7,7), 0)
+    # # event_time_image_denoise = cv2.GaussianBlur(event_time_image_denoise, (5,5), 0)
+    # # R = 3
+    # # threshold = 0.3
+    # # valid = (event_time_image_denoise[:, :, 1] > 0) | (event_time_image_denoise[:, :, 2] > 0)
+    # # valid_pixel_y, valid_pixel_x = np.where(valid)
+    # # mask = np.zeros((rows, cols), dtype=bool)
+    # # for y, x in zip(valid_pixel_y, valid_pixel_x):
+    # #     patch = event_time_image_denoise[max(0, y-r):y+r+1, max(0, x-r):x+r+1, :]
+    # #     valid_count = ((patch[:, :, 1] > 0) | (patch[:, :, 2] > 0)).sum()
+    # #     if valid_count / (patch.shape[0]*patch.shape[1]) < threshold:
+    # #         mask[y, x] = True
+    # # event_time_image_denoise[mask] *= 0
+    # # event_time_image_denoise = cv2.medianBlur(event_time_image_denoise, 3)
+    # event_time_image_denoise = (event_time_image_denoise / np.max(event_time_image_denoise) * 255).astype(np.uint8)
+    # cv2.imwrite(f'./event_frame_{args.method}_denoise.png', event_time_image_denoise)
 
 
 
-    # idx_cur = int(ts_map_prophesee_left[i+1])
-    # t_ref = event_data['t'][idx_cur]
-    # idxes = []
-    # idx_start_1, idx_start_6, idx_end_10 = find_near_index(event_data['t'][idx_cur], event_data['t'], time_window=200000)
-    # idx_start_2, _, idx_start_10 = find_near_index(event_data['t'][idx_cur], event_data['t'], time_window=160000)
-    # idx_start_3, _, idx_start_9 = find_near_index(event_data['t'][idx_cur], event_data['t'], time_window=120000)
-    # idx_start_4, _, idx_start_8 = find_near_index(event_data['t'][idx_cur], event_data['t'], time_window=80000)
-    # idx_start_5, _, idx_start_7 = find_near_index(event_data['t'][idx_cur], event_data['t'], time_window=40000)
-    # idxes.append(idx_start_1)
-    # idxes.append(idx_start_2)
-    # idxes.append(idx_start_3)
-    # idxes.append(idx_start_4)
-    # idxes.append(idx_start_5)
-    # idxes.append(idx_start_6)
-    # idxes.append(idx_start_7)
-    # idxes.append(idx_start_8)
-    # idxes.append(idx_start_9)
-    # idxes.append(idx_start_10)
-    # idxes.append(idx_end_10)
-    # rows, cols = event_data['resolution'][1], event_data['resolution'][0]
-    # # # Time surface
-    # for sub in range(10):
-    #     event_time_image = np.zeros((rows, cols, 2), dtype=np.float32)
-    #     print(sub, idxes[sub], idxes[sub+1])
-    #     for id in tqdm(range(idxes[sub+1]-idxes[sub])):
-    #         idx = int(id + idxes[sub])
-    #         y, x = event_data['y'][idx], event_data['x'][idx]
-    #         if event_data['p'][idx] > 0:
-    #             event_time_image[y, x, 0] = event_data['t'][idx]
-    #         else:
-    #             event_time_image[y, x, 1] = event_data['t'][idx]
-    #     event_time_image[event_time_image > 0] -= event_data['t'][idxes[sub]]
-    #     event_time_image = np.array(event_time_image)
-    #     event_time_image_disp = np.concatenate((np.zeros([event_time_image.shape[0], event_time_image.shape[1], 1]), event_time_image), axis=2)
-    #     cv2.imwrite(f'./event_frame_{sub:02d}.png', (event_time_image_disp / np.max(event_time_image_disp) * 255).astype(np.uint8))
+    # # idx_cur = int(ts_map_prophesee_left[i+1])
+    # # t_ref = event_data['t'][idx_cur]
+    # # idxes = []
+    # # idx_start_1, idx_start_6, idx_end_10 = find_near_index(event_data['t'][idx_cur], event_data['t'], time_window=200000)
+    # # idx_start_2, _, idx_start_10 = find_near_index(event_data['t'][idx_cur], event_data['t'], time_window=160000)
+    # # idx_start_3, _, idx_start_9 = find_near_index(event_data['t'][idx_cur], event_data['t'], time_window=120000)
+    # # idx_start_4, _, idx_start_8 = find_near_index(event_data['t'][idx_cur], event_data['t'], time_window=80000)
+    # # idx_start_5, _, idx_start_7 = find_near_index(event_data['t'][idx_cur], event_data['t'], time_window=40000)
+    # # idxes.append(idx_start_1)
+    # # idxes.append(idx_start_2)
+    # # idxes.append(idx_start_3)
+    # # idxes.append(idx_start_4)
+    # # idxes.append(idx_start_5)
+    # # idxes.append(idx_start_6)
+    # # idxes.append(idx_start_7)
+    # # idxes.append(idx_start_8)
+    # # idxes.append(idx_start_9)
+    # # idxes.append(idx_start_10)
+    # # idxes.append(idx_end_10)
+    # # rows, cols = event_data['resolution'][1], event_data['resolution'][0]
+    # # # # Time surface
+    # # for sub in range(10):
+    # #     event_time_image = np.zeros((rows, cols, 2), dtype=np.float32)
+    # #     print(sub, idxes[sub], idxes[sub+1])
+    # #     for id in tqdm(range(idxes[sub+1]-idxes[sub])):
+    # #         idx = int(id + idxes[sub])
+    # #         y, x = event_data['y'][idx], event_data['x'][idx]
+    # #         if event_data['p'][idx] > 0:
+    # #             event_time_image[y, x, 0] = event_data['t'][idx]
+    # #         else:
+    # #             event_time_image[y, x, 1] = event_data['t'][idx]
+    # #     event_time_image[event_time_image > 0] -= event_data['t'][idxes[sub]]
+    # #     event_time_image = np.array(event_time_image)
+    # #     event_time_image_disp = np.concatenate((np.zeros([event_time_image.shape[0], event_time_image.shape[1], 1]), event_time_image), axis=2)
+    # #     cv2.imwrite(f'./event_frame_{sub:02d}.png', (event_time_image_disp / np.max(event_time_image_disp) * 255).astype(np.uint8))
 
-    # # # pc map load
-    # vox_map = load_map(pc_path, device)
-    # print(f'load pointclouds finished! {vox_map.shape[1]} points')
-    # pose = torch.tensor(Ln_T_L0[i+1], device=device, dtype=torch.float32)
-    # pose_inv = pose.inverse()
-    # local_map = vox_map.clone()
-    # local_map = torch.matmul(pose, local_map)
-    # indexes = local_map[0, :] > -1.
-    # indexes = indexes & (local_map[0, :] < 10.)
-    # indexes = indexes & (local_map[1, :] > -5.)
-    # indexes = indexes & (local_map[1, :] < 5.)
-    # local_map = local_map[:, indexes]
-    # prophesee_left_T_lidar = torch.tensor(data["/ouster/calib/T_to_prophesee_left"], device=device, dtype=torch.float32)
-    # local_map = torch.matmul(prophesee_left_T_lidar, local_map)
-    # # pc_visualize(local_map.t().cpu().numpy())
-    # image_size = tuple(event_data['resolution'][[1, 0]])
-    # calib = torch.tensor(event_data['intrinsics'], device=device, dtype=torch.float)
-    # sparse_depth = depth_generation(local_map, image_size,
-    #                                 calib, 3., 5, device=device)
-    # sparse_depth_disp = (sparse_depth / torch.max(sparse_depth) * 255).cpu().numpy().astype(np.uint8)
-    # cv2.imwrite('./LiDAR_projection.png', sparse_depth_disp[0, :])
+    # # # # pc map load
+    # # vox_map = load_map(pc_path, device)
+    # # print(f'load pointclouds finished! {vox_map.shape[1]} points')
+    # # pose = torch.tensor(Ln_T_L0[i+1], device=device, dtype=torch.float32)
+    # # pose_inv = pose.inverse()
+    # # local_map = vox_map.clone()
+    # # local_map = torch.matmul(pose, local_map)
+    # # indexes = local_map[0, :] > -1.
+    # # indexes = indexes & (local_map[0, :] < 10.)
+    # # indexes = indexes & (local_map[1, :] > -5.)
+    # # indexes = indexes & (local_map[1, :] < 5.)
+    # # local_map = local_map[:, indexes]
+    # # prophesee_left_T_lidar = torch.tensor(data["/ouster/calib/T_to_prophesee_left"], device=device, dtype=torch.float32)
+    # # local_map = torch.matmul(prophesee_left_T_lidar, local_map)
+    # # # pc_visualize(local_map.t().cpu().numpy())
+    # # image_size = tuple(event_data['resolution'][[1, 0]])
+    # # calib = torch.tensor(event_data['intrinsics'], device=device, dtype=torch.float)
+    # # sparse_depth = depth_generation(local_map, image_size,
+    # #                                 calib, 3., 5, device=device)
+    # # sparse_depth_disp = (sparse_depth / torch.max(sparse_depth) * 255).cpu().numpy().astype(np.uint8)
+    # # cv2.imwrite('./LiDAR_projection.png', sparse_depth_disp[0, :])
 
 
-    # # rgb load
-    # ts_pose = pose_ts[i+1]
-    # index = (ts_pose - rgb_ts[0]) // 40000
-    # rgb = rgbs[int(index), ...]
-    # cv2.imwrite('./rgb.png', rgb)
+    # # # rgb load
+    # # ts_pose = pose_ts[i+1]
+    # # index = (ts_pose - rgb_ts[0]) // 40000
+    # # rgb = rgbs[int(index), ...]
+    # # cv2.imwrite('./rgb.png', rgb)
 
-    # prophesee_left_T_rgb = torch.tensor(rgb_data['T_to_prophesee_left'], device=device, dtype=torch.float32)
-    # local_map = torch.matmul(prophesee_left_T_rgb.inverse(), local_map)
-    # image_size = tuple(rgb_data['resolution'][[1, 0]])
-    # calib = torch.tensor(rgb_data['intrinsics'], device=device, dtype=torch.float)
-    # sparse_depth = depth_generation(local_map, image_size,
-    #                                 calib, 3., 5, device=device)
-    # sparse_depth_disp = (sparse_depth / torch.max(sparse_depth) * 255).cpu().numpy().astype(np.uint8)
-    # cv2.imwrite('./LiDAR_projection_rgb.png', sparse_depth_disp[0, :])
+    # # prophesee_left_T_rgb = torch.tensor(rgb_data['T_to_prophesee_left'], device=device, dtype=torch.float32)
+    # # local_map = torch.matmul(prophesee_left_T_rgb.inverse(), local_map)
+    # # image_size = tuple(rgb_data['resolution'][[1, 0]])
+    # # calib = torch.tensor(rgb_data['intrinsics'], device=device, dtype=torch.float)
+    # # sparse_depth = depth_generation(local_map, image_size,
+    # #                                 calib, 3., 5, device=device)
+    # # sparse_depth_disp = (sparse_depth / torch.max(sparse_depth) * 255).cpu().numpy().astype(np.uint8)
+    # # cv2.imwrite('./LiDAR_projection_rgb.png', sparse_depth_disp[0, :])

@@ -50,7 +50,8 @@ if __name__ == '__main__':
     poses = h5py.File(pose_path,'r')
     ts_map_prophesee_left = poses['ts_map_prophesee_left']
 
-    out_file = os.path.join(args.save_dir, args.sequence, f"event_frames_{args.method}_{args.time_window}", args.camera)
+    # out_file = os.path.join(args.save_dir, args.sequence, f"event_frames_{args.method}_{args.time_window}", args.camera)
+    out_file = os.path.join(args.save_dir, args.sequence, f"event_frames_{args.method}_pre_{100000}", args.camera)
     if not os.path.exists(out_file):
         os.makedirs(out_file)
     
