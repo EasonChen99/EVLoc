@@ -7,9 +7,9 @@ import cv2
 from utils import find_near_index
 
 parser = argparse.ArgumentParser(description='Spike Encoding')
-parser.add_argument('--save-dir', type=str, default='../datasets', metavar='PARAMS', help='Main Directory to save all encoding results')
+parser.add_argument('--save-dir', type=str, default='/home/eason/WorkSpace/EventbasedVisualLocalization/preprocessed_dataset/MVSEC', metavar='PARAMS', help='Main Directory to save all encoding results')
 parser.add_argument('--save-env', type=str, default='indoor_flying1', metavar='PARAMS', help='Sub-Directory name to save Environment specific encoding results')
-parser.add_argument('--data-path', type=str, default='../datasets/indoor_flying1/indoor_flying1_data.hdf5', metavar='PARAMS', help='HDF5 datafile path to load raw data from')
+parser.add_argument('--data-path', type=str, default='/media/eason/e835c718-d773-44a1-9ca4-881204d9b53d/Datasets/MVSEC', metavar='PARAMS', help='HDF5 datafile path to load raw data from')
 args = parser.parse_args()
 
 
@@ -73,8 +73,6 @@ class Events(object):
 
             t_index = t_index + 1
 
-            # print((td_img_c>0).sum())
-            # print(np.max(td_img_c), np.min(td_img_c))
             np.save(os.path.join(count_dir, f'event_frame_{i:05d}'), td_img_c)
 
 

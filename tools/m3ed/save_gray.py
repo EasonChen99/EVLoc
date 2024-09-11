@@ -10,11 +10,11 @@ from utils import load_data, load_map, pc_visualize, depth_generation, find_near
 
 device = torch.device(f"cuda:0" if torch.cuda.is_available() else "cpu")
 
-name = "falcon_indoor_flight_2"
-root = "/media/eason/e835c718-d773-44a1-9ca4-881204d9b53d/Datasets/M3ED/Falcon/Indoor/flight_2"
+name = "spot_outdoor_day_srt_under_bridge_2"
+root = "/media/eason/e835c718-d773-44a1-9ca4-881204d9b53d/Datasets/M3ED/original/Spot/Outdoor/day_srt_under_bridge_2"
 h5_file = f"{name}_data.h5"
 pose_file = f"{name}_depth_gt.h5"
-camera = 'right'
+camera = 'left'
 
 data_path = os.path.join(root, h5_file)
 pose_path = os.path.join(root, pose_file)

@@ -69,7 +69,8 @@ def train(args, TrainImgLoader, model, optimizer, scheduler, scaler, logger, dev
         R_err = sample['rot_error']
 
         data_generate = Data_preprocess(calib, occlusion_threshold, occlusion_kernel)
-        event_input, lidar_input, flow_gt = data_generate.push(event_frame, pc, T_err, R_err, device)
+        # event_input, lidar_input, flow_gt = data_generate.push(event_frame, pc, T_err, R_err, device, MAX_DEPTH=args.max_depth)
+        event_input, lidar_input, flow_gt = data_generate.push(event_frame, pc, T_err, R_err, device, MAX_DEPTH=args.max_depth, h=240, w=320)
 
         vis_event_time_image = event_input[0,...].permute(1, 2, 0).cpu().numpy()
         if vis_event_time_image.shape[2] == 1:
@@ -114,8 +115,9 @@ def test(args, TestImgLoader, model, device, cal_pose=False):
         R_err = sample['rot_error']
 
         data_generate = Data_preprocess(calib, occlusion_threshold, occlusion_kernel)
-        event_input, lidar_input, flow_gt = data_generate.push(event_frame, pc, T_err, R_err, device, split='test', h=240, w=320)
-            
+        # event_input, lidar_input, flow_gt = data_generate.push(event_frame, pc, T_err, R_err, device, MAX_DEPTH=args.max_depth, split='test', h=600, w=960)
+        event_input, lidar_input, flow_gt = data_generate.push(event_frame, pc, T_err, R_err, device, MAX_DEPTH=args.max_depth, split='test', h=240, w=320)
+
         end = time.time()
         _, flow_up = model(lidar_input, event_input, iters=24, test_mode=True)
 
@@ -132,8 +134,8 @@ def test(args, TestImgLoader, model, device, cal_pose=False):
         out_list.append(out[val].cpu().numpy())
 
         if cal_pose:
-            # R_pred, T_pred, inliers, flag = Flow2Pose(flow_up, lidar_input, calib)
-            R_pred, T_pred, inliers, flag = Flow2Pose(flow_up, lidar_input, calib, x=10, y=13, h=240, w=320)
+            # R_pred, T_pred, inliers, flag = Flow2Pose(flow_up, lidar_input, calib, MAX_DEPTH=args.max_depth)
+            R_pred, T_pred, inliers, flag = Flow2Pose(flow_up, lidar_input, calib, MAX_DEPTH=args.max_depth, x=10, y=13, h=240, w=320)
 
             Time += time.time() - end
             if flag:
@@ -292,6 +294,9 @@ if __name__ == '__main__':
     parser.add_argument('--max_t', 
                         type=float, 
                         default=0.5)
+    parser.add_argument('--max_depth', 
+                        type=float, 
+                        default=10.)
     parser.add_argument('--num_workers', 
                         type=int, 
                         default=3)

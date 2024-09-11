@@ -156,7 +156,9 @@ def test(args, TestImgLoader, model, device, cal_pose=False):
     out_list, epe_list = [], []
     Time = 0.
     outliers, err_r_list, err_t_list = [], [], []
-    
+    # init_r_list, init_t_list = [], []
+    # err_r_init_list, err_t_init_list = [], []
+
     import matplotlib.pyplot as plt
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
@@ -195,9 +197,13 @@ def test(args, TestImgLoader, model, device, cal_pose=False):
                 outliers.append(i_batch)
             else:
                 RT_pred = to_rotation_matrix(R_pred, T_pred)
+                # err_r, err_t = err_Pose(R_pred, T_pred, R_err[0], T_err[0])
+                # err_r_init_list.append(err_r.item())
+                # err_t_init_list.append(err_t.item())
                 R_offset = offset_R[0]
                 T_offset = offset_T[0]
                 RT_offset = to_rotation_matrix(R_offset, T_offset)
+
                 origin = np.array([[0., 0., 0., 1.]])
                 origin_t = np.matmul(RT_offset.cpu().numpy(), origin.transpose())
                 coordinate = origin_t.transpose()[0, :3] * 10000
@@ -209,16 +215,37 @@ def test(args, TestImgLoader, model, device, cal_pose=False):
                     ax.scatter(*coordinate, color='r')
                 elif coordinate[0] >= 0 and coordinate[1] < 0:
                     ax.scatter(*coordinate, color='y')
+
                 RT_pred_offset = torch.mm(RT_pred, RT_offset.inverse().to(RT_pred.device))
                 T_pred_offset = RT_pred_offset[:3, 3]
                 R_pred_offset = quaternion_from_matrix(RT_pred_offset)
-
                 err_r, err_t = err_Pose(R_pred_offset, T_pred_offset, R_err[0], T_err[0])
                 err_r_list.append(err_r.item())
                 err_t_list.append(err_t.item())
+
+                # err_r_init, err_t_init = err_Pose(torch.tensor([1., 0., 0., 0.]), torch.tensor([0., 0., 0.]), R_err[0], T_err[0])
+                # init_r_list.append(err_r_init.item())
+                # init_t_list.append(err_t_init.item())
+
             print(f"{i_batch:05d}: {np.mean(err_t_list):.5f} {np.mean(err_r_list):.5f} {np.median(err_t_list):.5f} "
                   f"{np.median(err_r_list):.5f} {len(outliers)} {Time / (i_batch+1):.5f}")
-        
+            # print(f"{np.mean(init_t_list):.5f} {np.mean(init_r_list):.5f}")
+            # print(f"{np.mean(err_t_init_list):.5f} {np.mean(err_r_init_list):.5f}")
+
+
+        # error_offset_file = "./logs/error_offset.txt"
+        # with open(error_offset_file, 'w') as file:
+        #     for i in range(len(err_r_list)):
+        #         file.write(str(err_r_list[i]) + " " + str(err_t_list[i]) + '\n')
+        # error_init_file = "./logs/error_init.txt"
+        # with open(error_init_file, 'w') as file:
+        #     for i in range(len(init_r_list)):
+        #         file.write(str(init_r_list[i]) + " " + str(init_t_list[i]) + '\n')
+        # error_file = "./logs/error.txt"
+        # with open(error_file, 'w') as file:
+        #     for i in range(len(err_r_init_list)):
+        #         file.write(str(err_r_init_list[i]) + " " + str(err_t_init_list[i]) + '\n')
+
         if args.render:
             if not os.path.exists(f"./visualization/test/cat"):
                 os.makedirs(f"./visualization/test/cat")
@@ -336,7 +363,7 @@ if __name__ == '__main__':
                         default='TS')
     parser.add_argument('--ran',
                         type=str,
-                        default='mid')
+                        default='pre')
     parser.add_argument('--test_sequence',
                         type=str, 
                         default='falcon_indoor_flight_3')

@@ -46,8 +46,8 @@ class DatasetMVSEC(Dataset):
         scene_list = [
                       'indoor_flying1', 
                       'indoor_flying2', 
-                      'indoor_flying3', 
-                      'indoor_flying4'
+                    #   'indoor_flying3', 
+                    #   'indoor_flying4'
                      ]
         
         for dir in scene_list:
@@ -62,6 +62,7 @@ class DatasetMVSEC(Dataset):
                 # if idx + 70 < Ln_T_L0.shape[0] and idx > 70: #M3ED
                 # if idx + 140 < Ln_T_L0.shape[0] and idx > 140: #MVSEC_Indoor_Flying
                 if idx + 150 < Ln_T_L0.shape[0] and idx > 150:
+                # if idx + 250 < Ln_T_L0.shape[0] and idx > 250:
                     if not os.path.exists(os.path.join(self.root_dir, dir, "local_maps", f"point_cloud_{idx:05d}"+'.h5')):
                         continue
                     if not os.path.exists(os.path.join(self.root_dir, dir, f"event_frames_{self.method}_{self.ran}_{self.suffix}", 'left', f"event_frame_{idx:05d}"+'.npy')):
@@ -123,7 +124,8 @@ class DatasetMVSEC(Dataset):
         timestamp = str(item.split('/')[3])
 
         event_frame_path = os.path.join(self.root_dir, run, f"event_frames_{self.method}_{self.ran}_{self.suffix}", camera, 'event_frame_'+timestamp+'.npy')
-        pc_path = os.path.join(self.root_dir, run, "local_maps", "point_cloud_"+f"{int(timestamp)+1:05d}"+'.h5')
+        # pc_path = os.path.join(self.root_dir, run, "local_maps", "point_cloud_"+f"{int(timestamp)+1:05d}"+'.h5')
+        pc_path = os.path.join(self.root_dir, run, "local_maps", "point_cloud_"+f"{int(timestamp):05d}"+'.h5')
 
         try:
             with h5py.File(pc_path, 'r') as hf:
@@ -163,13 +165,10 @@ class DatasetMVSEC(Dataset):
             pc_in = rotate_forward(pc_in, R, T)
 
         event_frame = np.load(event_frame_path)
-        # event_frame = cv2.medianBlur(event_frame, 3)
-        # event_frame = cv2.GaussianBlur(event_frame, (7,7), 0)
-        # event_frame = cv2.GaussianBlur(event_frame, (5,5), 0)
         event_time_frame = torch.tensor(event_frame).float()
-        # event_time_frame = torch.tensor(np.load(event_frame_path)).permute(1, 2, 0)
         event_time_frame[event_time_frame<0] = 0
         event_time_frame /= torch.max(event_time_frame)
+        event_time_frame = event_time_frame.unsqueeze(-1)
 
         if event_time_frame.shape[2] <= 4:
             event_time_frame = F.to_pil_image(event_time_frame.permute(2, 0, 1))
