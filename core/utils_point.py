@@ -15,7 +15,6 @@ def rotate_points(PC, R, T=None, inverse=True):
         R = R.to_matrix()
         R.resize_4x4()
         T = mathutils.Matrix.Translation(T)
-        # RT = T*R
         RT = mathutils.Matrix(np.matmul(np.asarray(T), np.asarray(R)))
     else:
         RT=R.copy()
@@ -259,11 +258,8 @@ def rotation_vector_to_euler(rvecs):
 
 
 def overlay_imgs(rgb, lidar):
-    # std = [0.229, 0.224, 0.225]
-    # mean = [0.485, 0.456, 0.406]
     rgb = rgb.clone().cpu().permute(1,2,0).numpy()
     if rgb.shape[2] == 3:
-        # rgb = rgb*std+mean
         rgb = rgb
     else:
         rgb = np.concatenate((np.zeros([rgb.shape[0], rgb.shape[1], 1]), rgb), axis=2)
@@ -293,6 +289,5 @@ def overlay_imgs(rgb, lidar):
     blended_img = lidar_color[:, :, :3] * (np.expand_dims(lidar_color[:, :, 3], 2)) \
                 + rgb * (1. - np.expand_dims(lidar_color[:, :, 3], 2))
     blended_img = blended_img.clip(min=0., max=1.)
-    # blended_img = cv2.cvtColor((blended_img*255).astype(np.uint8), cv2.COLOR_BGR2RGB)
     blended_img = (blended_img*255).astype(np.uint8)
     return blended_img

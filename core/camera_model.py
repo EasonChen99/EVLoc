@@ -100,14 +100,6 @@ class CameraModel:
         return xyz.transpose(), pc_project.transpose(), match_index.transpose()
 
     def depth2pc(self, depth_img):
-        # pc = torch.zeros([depth_img.shape[0], depth_img.shape[1], 3])
-        # pc[:, :, 2] = depth_img
-        #
-        # for i in range(depth_img.shape[0]):
-        #     for j in range(depth_img.shape[1]):
-        #         pc[i, j, 0] = (j - self.principal_point[0]) * depth_img[i, j] / self.focal_length[0]
-        #         pc[i, j, 1] = (i - self.principal_point[1]) * depth_img[i, j] / self.focal_length[1]
-
         depth_img = depth_img.cpu().numpy()
         index = np.argwhere(depth_img > 0)
         mask = depth_img > 0
@@ -115,8 +107,5 @@ class CameraModel:
         x = (index[:, 1] - self.principal_point[0].cpu().numpy()) * z / self.focal_length[0].cpu().numpy()
         y = (index[:, 0] - self.principal_point[1].cpu().numpy()) * z / self.focal_length[1].cpu().numpy()
 
-        # pc[index[:, 0], index[:, 1], 0] = x
-        # pc[index[:, 0], index[:, 1], 1] = y
-        # pc[index[:, 0], index[:, 1], 2] = z
         zxy = np.array([z, x, y], dtype=np.float32)
         return zxy
