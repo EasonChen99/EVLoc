@@ -1,15 +1,6 @@
-# -------------------------------------------------------------------
-# Copyright (C) 2020 Università degli studi di Milano-Bicocca, iralab
-# Author: Daniele Cattaneo (d.cattaneo10@campus.unimib.it)
-# Released under Creative Commons
-# Attribution-NonCommercial-ShareAlike 4.0 International License.
-# http://creativecommons.org/licenses/by-nc-sa/4.0/
-# -------------------------------------------------------------------
 import numpy as np
 import torch
 import sys
-sys.path.append("core")
-from utils_point import rotate_forward, rotate_back
 
 class CameraModel:
     def __init__(self, focal_length=None, principal_point=None):
