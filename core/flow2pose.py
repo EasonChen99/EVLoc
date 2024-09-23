@@ -25,7 +25,6 @@ def Flow2Pose(flow_up, depth, calib, flow_gt=None, uncertainty=None, x=60, y=160
         epe = torch.sum((flow_up - flow_gt) ** 2, dim=1).sqrt()
         valid_gt = (flow_gt[:, 0, :, :] != 0) + (flow_gt[:, 1, :, :] != 0)
         mask = (epe < 5) * valid_gt # BxHxW
-        # mask = valid_gt
         mask = mask[0, ...].cpu().numpy()
     if uncertainty is not None:
         mask = uncertainty < 0.7

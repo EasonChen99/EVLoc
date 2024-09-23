@@ -8,8 +8,6 @@ import numpy as np
 import argparse
 import torch
 
-import visibility
-
 from core.datasets_m3ed import DatasetM3ED
 from core.backbone import Backbone_Event_Offset_RT
 from core.utils import (count_parameters, merge_inputs, fetch_optimizer, Logger, remove_noise, enhanced_depth_line_extract)
@@ -18,7 +16,6 @@ from core.data_preprocess import Data_preprocess
 from core.flow_viz import flow_to_image
 from core.flow2pose import Flow2Pose, err_Pose
 from core.losses import sequence_loss, sequence_loss_single
-from core.depth_completion import sparse_to_dense
 
 occlusion_kernel = 5
 occlusion_threshold = 3
@@ -105,39 +102,10 @@ def train(args, TrainImgLoader, model, optimizer, scheduler, scaler, logger, dev
             flow_loss = sequence_loss_single(flow_preds[i], flow_gt, Mask, mask_sum)
             loss += i_weight * flow_loss
 
-        # lidar_input_gt = data_generate.push_depth_gt(event_frame, pc, x_list, y_list, device, offsets=[offsets_R[-1], offsets_T[-1]])
-        # lidar_fmap = model(lidar_input_gt, event_input, encode_only=True)
-        # # calculate feature distance
-        # B, C, H, W = lidar_fmap.shape
-        # cos = torch.nn.CosineSimilarity(dim=1, eps=1e-6)
-        # feature_distance = cos(lidar_fmap.reshape(B, C, H*W), event_fmap.reshape(B, C, H*W))
-        # lidar_fmap_vis = torch.mean(lidar_fmap, dim=1)[0, ...]
-        # lidar_fmap_vis = (lidar_fmap_vis - torch.min(lidar_fmap_vis)) / (torch.max(lidar_fmap_vis) - torch.min(lidar_fmap_vis))
-        # cv2.imwrite(f"./visualization/{i_batch:05d}_lidar_feature.png", (lidar_fmap_vis).cpu().detach().numpy()*255)
-        # event_fmap_vis = torch.mean(event_fmap, dim=1)[0, ...]
-        # event_fmap_vis = (event_fmap_vis - torch.min(event_fmap_vis)) / (torch.max(event_fmap_vis) - torch.min(event_fmap_vis))
-        # cv2.imwrite(f"./visualization/{i_batch:05d}_event_feature.png", (event_fmap_vis).cpu().detach().numpy()*255)
-        # feature_distance_vis = feature_distance.reshape(B, H, W)[0, ...]
-        # feature_distance_vis_pos = torch.zeros(feature_distance_vis.shape, device=feature_distance_vis.device)
-        # feature_distance_vis_neg = torch.zeros(feature_distance_vis.shape, device=feature_distance_vis.device)
-        # feature_distance_vis_pos[feature_distance_vis>0] = feature_distance_vis[feature_distance_vis>0]
-        # feature_distance_vis_neg[feature_distance_vis<0] = feature_distance_vis[feature_distance_vis<0]
-        # feature_distance_vis = torch.cat((torch.zeros(feature_distance_vis.shape, device=feature_distance_vis.device).unsqueeze(-1), feature_distance_vis_pos.unsqueeze(-1), feature_distance_vis_neg.unsqueeze(-1)), dim=-1)
-        # cv2.imwrite(f"./visualization/{i_batch:05d}_cos.png", (feature_distance_vis).cpu().detach().numpy()*255)
-        # feature_distance = torch.sum(feature_distance, dim=1)
-        # feature_distance /= H*W
-        # feature_distance = torch.exp(-1 * feature_distance)
-        # feature_distance = feature_distance.mean()
-        
-        # vis_lidar_input = overlay_imgs(event_input[0, :, :, :]*0, lidar_input_gt[0, 0, :, :])
-        # cv2.imwrite(f"./visualization/{i_batch:05d}_depth_gt.png", (vis_lidar_input / np.max(vis_lidar_input) * 255).astype(np.uint8))
-        
         epe = torch.sum((flow_preds[-1] - flow_gt) ** 2, dim=1).sqrt()
         epe = epe.view(-1)[valid.view(-1)]
         metrics = {
             'epe': epe.mean().item()
-            # 'flow_loss': flow_loss.item(),
-            # 'feature_distance': feature_distance.item(),
         }
 
         scaler.scale(loss).backward()
@@ -156,8 +124,6 @@ def test(args, TestImgLoader, model, device, cal_pose=False):
     out_list, epe_list = [], []
     Time = 0.
     outliers, err_r_list, err_t_list = [], [], []
-    # init_r_list, init_t_list = [], []
-    # err_r_init_list, err_t_init_list = [], []
 
     import matplotlib.pyplot as plt
     fig = plt.figure()
@@ -197,9 +163,6 @@ def test(args, TestImgLoader, model, device, cal_pose=False):
                 outliers.append(i_batch)
             else:
                 RT_pred = to_rotation_matrix(R_pred, T_pred)
-                # err_r, err_t = err_Pose(R_pred, T_pred, R_err[0], T_err[0])
-                # err_r_init_list.append(err_r.item())
-                # err_t_init_list.append(err_t.item())
                 R_offset = offset_R[0]
                 T_offset = offset_T[0]
                 RT_offset = to_rotation_matrix(R_offset, T_offset)
@@ -223,123 +186,27 @@ def test(args, TestImgLoader, model, device, cal_pose=False):
                 err_r_list.append(err_r.item())
                 err_t_list.append(err_t.item())
 
-                # err_r_init, err_t_init = err_Pose(torch.tensor([1., 0., 0., 0.]), torch.tensor([0., 0., 0.]), R_err[0], T_err[0])
-                # init_r_list.append(err_r_init.item())
-                # init_t_list.append(err_t_init.item())
-
             print(f"{i_batch:05d}: {np.mean(err_t_list):.5f} {np.mean(err_r_list):.5f} {np.median(err_t_list):.5f} "
                   f"{np.median(err_r_list):.5f} {len(outliers)} {Time / (i_batch+1):.5f}")
-            # print(f"{np.mean(init_t_list):.5f} {np.mean(init_r_list):.5f}")
-            # print(f"{np.mean(err_t_init_list):.5f} {np.mean(err_r_init_list):.5f}")
 
 
-        # error_offset_file = "./logs/error_offset.txt"
-        # with open(error_offset_file, 'w') as file:
-        #     for i in range(len(err_r_list)):
-        #         file.write(str(err_r_list[i]) + " " + str(err_t_list[i]) + '\n')
-        # error_init_file = "./logs/error_init.txt"
-        # with open(error_init_file, 'w') as file:
-        #     for i in range(len(init_r_list)):
-        #         file.write(str(init_r_list[i]) + " " + str(init_t_list[i]) + '\n')
-        # error_file = "./logs/error.txt"
-        # with open(error_file, 'w') as file:
-        #     for i in range(len(err_r_init_list)):
-        #         file.write(str(err_r_init_list[i]) + " " + str(err_t_init_list[i]) + '\n')
-
-        if args.render:
-            if not os.path.exists(f"./visualization/test/cat"):
-                os.makedirs(f"./visualization/test/cat")
-            if not os.path.exists(f"./visualization/test/event"):
-                os.makedirs(f"./visualization/test/event")
-            if not os.path.exists(f"./visualization/test/depth"):
-                os.makedirs(f"./visualization/test/depth") 
-            if not os.path.exists(f"./visualization/test/flow"):
-                os.makedirs(f"./visualization/test/flow")            
-
-            vis_event_time_image = event_input[0, ...].permute(1, 2, 0).cpu().numpy()
-            vis_event_time_image = np.concatenate((np.zeros([vis_event_time_image.shape[0], vis_event_time_image.shape[1], 1]), vis_event_time_image), axis=2)
-            vis_event_time_image = (vis_event_time_image / np.max(vis_event_time_image) * 255).astype(np.uint8)
-            cv2.imwrite(f'./visualization/test/event/{i_batch:05d}_event.png', vis_event_time_image)
-            flow_image = flow_to_image(flow_up.permute(0, 2, 3, 1).cpu().detach().numpy()[0])
-            cv2.imwrite(f'./visualization/test/flow/{i_batch:05d}_flow.png', flow_image)
-
-            original_overlay = overlay_imgs(event_input[0, :, :, :], lidar_input[0, 0, :, :])
-            cv2.imwrite(f'./visualization/test/depth/{i_batch:05d}_depth_1_ori.png', original_overlay)
-            RT_inv = to_rotation_matrix(R_err[0], T_err[0])
-            RT_inv = RT_inv.to(device)
-            RT = RT_inv.clone().inverse()
-            RT_pred = to_rotation_matrix(R_pred_offset, T_pred_offset)
-            RT_pred = RT_pred.to(device)
-            RT_new = torch.mm(RT, RT_pred)
-            T_composed = RT_new[:3, 3]
-            R_composed = quaternion_from_matrix(RT_new)
-            _, lidar_input_pred, _, _ = data_generate.push_input(event_frame, pc, [T_composed], [R_composed], device, split='test') 
-            pred_overlay = overlay_imgs(event_input[0, :, :, :], lidar_input_pred[0, 0, :, :])
-            cv2.imwrite(f'./visualization/test/depth/{i_batch:05d}_depth_2_pred.png', pred_overlay)
-            # _, lidar_input_offset, _, _ = data_generate.push_input(event_frame, pc, [T_pred_offset], [R_pred_offset], device, split='test') 
-            # offset_overlay = overlay_imgs(event_input[0, :, :, :]*0, lidar_input_offset[0, 0, :, :])
-            # cv2.imwrite(f'./visualization/test/depth/{i_batch:05d}_depth_3_offset.png', offset_overlay)
-
-            cat_ori = np.hstack((vis_event_time_image, original_overlay))
-
-            cat_pre = np.hstack((pred_overlay, flow_image))
-            cat = np.vstack((cat_ori, cat_pre))
-
-            # error smaller, pixel brighter
-            errors = torch.sum((flow_up - flow_gt) ** 2, dim=1).sqrt() * valid_gt
-            errors_visp = 255 - (errors - torch.min(errors)) / (torch.max(errors) - torch.min(errors)) * 255
-            errors_visp = errors_visp * valid_gt
-            errors_visp = torch.cat((errors_visp, torch.zeros([2, errors_visp.shape[1], errors_visp.shape[2]], device=device)), dim=0).permute(1, 2, 0).cpu().detach().numpy()[:, :, [2, 1, 0]]
-
-            # vis inliers distribution
-            inliers_map = np.zeros([lidar_input.shape[2], lidar_input.shape[3], 3])
-            inliers_map[inliers[:, 0], inliers[:, 1], 0] = 1
-            inliers_rate = inliers_map[:, :, 0].sum() / (lidar_input[0, 0, :, :]>0).sum()
-            # inliers_map = inliers_map * np.repeat(valid_gt.cpu().numpy()[0, ...][:, :, None], repeats=3, axis=2)
-            cat_inliers = np.vstack((inliers_map*255, errors_visp))
-            cat = np.hstack((cat, cat_inliers))
-
-            dist_map = np.zeros([lidar_input.shape[2], lidar_input.shape[3], 3])
-            dist_map[(errors[0].cpu().numpy() < 5) * (errors[0].cpu().numpy() > 0), 1] = 1
-            inliers_epe_5_rate = inliers_map[:, :, 0] * dist_map[:, :, 1]
-            inliers_epe_5_rate = inliers_epe_5_rate.sum() / inliers_map[:, :, 0].sum()
-
-            if cal_pose and (not flag):
-                # Define text properties
-                text = f"idx={i_batch:03d} R={err_r.item():.3f} T={err_t.item():.3f}"
-                org = (cat.shape[1]-850, cat.shape[0]-70)
-                font = cv2.FONT_HERSHEY_SIMPLEX
-                fontScale = 1
-                color = (0, 0, 255)
-                thickness = 2
-                # Add text to the image
-                cv2.putText(cat, text, org, font, fontScale, color, thickness, cv2.LINE_AA)
-                org = (cat.shape[1]-850, cat.shape[0]-40)
-                text = f"inliers={inliers_map[:, :, 0].sum():.0f} inliers_rate={inliers_rate:.3f} epe={epe[val].mean().item()}"
-                cv2.putText(cat, text, org, font, fontScale, color, thickness, cv2.LINE_AA)
-                org = (cat.shape[1]-850, cat.shape[0]-10)
-                text = f"epe_5={dist_map[:, :, 1].sum():.0f} inliers_epe_5={inliers_epe_5_rate * inliers_map[:, :, 0].sum():.0f} inliers_epe_5={inliers_epe_5_rate:.3f}"
-                cv2.putText(cat, text, org, font, fontScale, color, thickness, cv2.LINE_AA)
-
-            cv2.imwrite(f'./visualization/test/cat/{i_batch:05d}.png', cat)
-
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_zlabel('Z')
-        ax.set_title('Visualization of Transformation Vectors')
-        # Adding a legend
-        ax.legend()
-        # Setting the limits for clarity
-        ax.set_xlim([-100, 100])
-        ax.set_ylim([-100, 100])
-        ax.set_zlim([-100, 100])
-        # Show the plot
-        plt.savefig("./visualization/offset.png")
+        original_overlay = overlay_imgs(event_input[0, :, :, :], lidar_input[0, 0, :, :])
+        cv2.imwrite(f'./visualization/depth/{i_batch:05d}_depth_1_ori.png', original_overlay)
+        RT_inv = to_rotation_matrix(R_err[0], T_err[0])
+        RT_inv = RT_inv.to(device)
+        RT = RT_inv.clone().inverse()
+        RT_pred = to_rotation_matrix(R_pred_offset, T_pred_offset)
+        RT_pred = RT_pred.to(device)
+        RT_new = torch.mm(RT, RT_pred)
+        T_composed = RT_new[:3, 3]
+        R_composed = quaternion_from_matrix(RT_new)
+        _, lidar_input_pred, _, _ = data_generate.push_input(event_frame, pc, [T_composed], [R_composed], device, split='test') 
+        pred_overlay = overlay_imgs(event_input[0, :, :, :], lidar_input_pred[0, 0, :, :])
+        cv2.imwrite(f'./visualization/depth/{i_batch:05d}_depth_2_pred.png', pred_overlay)
 
     epe_list = np.array(epe_list)
     out_list = np.concatenate(out_list)
     
-    # epe = np.mean(epe_list)
     epe = np.median(epe_list)
     f1 = 100 * np.mean(out_list)
     if not cal_pose:
@@ -354,16 +221,10 @@ if __name__ == '__main__':
                         metavar='DIR',
                         default='/home/eason/WorkSpace/EventbasedVisualLocalization/preprocessed_dataset/M3ED',
                         help='path to dataset')
-    parser.add_argument('--suffix',
+    parser.add_argument('--ev_input', 
+                        '--event_representation',
                         type=str,
-                        default='100000',
-                        help='suffix of the event frame folder')
-    parser.add_argument('--method',
-                        type=str,
-                        default='TS')
-    parser.add_argument('--ran',
-                        type=str,
-                        default='pre')
+                        default='ours_denoise_pre_100000')
     parser.add_argument('--test_sequence',
                         type=str, 
                         default='falcon_indoor_flight_3')
@@ -434,8 +295,6 @@ if __name__ == '__main__':
                         dest='evaluate', 
                         action='store_true',
                         help='evaluate model on validation set')
-    parser.add_argument('--render', 
-                        action='store_true')
     args = parser.parse_args()    
 
 
@@ -455,9 +314,7 @@ if __name__ == '__main__':
         return _init_fn(x, seed)
 
     dataset_test = DatasetM3ED(args.data_path,
-                               args.suffix, 
-                               args.method,
-                               args.ran,
+                               event_representation=args.ev_input,
                                max_r=args.max_r, 
                                max_t=args.max_t,
                                split='test', 
@@ -480,9 +337,7 @@ if __name__ == '__main__':
         sys.exit()
 
     dataset_train = DatasetM3ED(args.data_path,
-                                args.suffix, 
-                                args.method,
-                                args.ran,
+                                event_representation=args.ev_input,
                                 max_r=args.max_r, 
                                 max_t=args.max_t,
                                 split='train',

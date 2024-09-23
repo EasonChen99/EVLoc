@@ -77,15 +77,13 @@ def get_left_right_T(sequence):
         raise TypeError("Sequence Not Available")
 
 class DatasetM3ED(Dataset):
-    def __init__(self, dataset_dir, suffix, method, ran, max_t=2., max_r=10., split='test', device='cuda:0', test_sequence='falcon_indoor_flight_3'):
+    def __init__(self, dataset_dir, event_representation, max_t=0.5, max_r=5., split='test', device='cuda:0', test_sequence='falcon_indoor_flight_3'):
         super(DatasetM3ED, self).__init__()
         self.device = device
         self.max_r = max_r
         self.max_t = max_t
         self.root_dir = dataset_dir
-        self.suffix = suffix
-        self.method = method
-        self.ran = ran
+        self.event_representation = event_representation
         self.split = split
         self.GTs_R = {}
         self.GTs_T = {}
@@ -95,13 +93,13 @@ class DatasetM3ED(Dataset):
         scene_list = [
                     #   'falcon_indoor_flight_1', 
                     #   'falcon_indoor_flight_2', 
-                    #   'falcon_indoor_flight_3', 
+                      'falcon_indoor_flight_3', 
                     #   'falcon_outdoor_day_penno_parking_1',
                     #   'falcon_outdoor_day_penno_parking_2',
                     #   'falcon_outdoor_night_penno_parking_1',
                     #   'falcon_outdoor_night_penno_parking_2',
-                    'spot_outdoor_day_srt_under_bridge_1',
-                    'spot_outdoor_day_srt_under_bridge_2'
+                    # 'spot_outdoor_day_srt_under_bridge_1',
+                    # 'spot_outdoor_day_srt_under_bridge_2'
                      ]
         
         for dir in scene_list:
@@ -113,18 +111,18 @@ class DatasetM3ED(Dataset):
             Ln_T_L0 = poses['Ln_T_L0'] 
 
             for idx in range(Ln_T_L0.shape[0]):
-                # if idx + 70 < Ln_T_L0.shape[0] and idx > 70:
-                if idx + 140 < Ln_T_L0.shape[0] and idx > 140:  # spot_outdoor
+                if idx + 70 < Ln_T_L0.shape[0] and idx > 70:
+                # if idx + 140 < Ln_T_L0.shape[0] and idx > 140:  # spot_outdoor
                     print()
                     if not os.path.exists(os.path.join(self.root_dir, dir, "local_maps", f"point_cloud_{idx:05d}"+'.h5')):
                         continue
-                    if not os.path.exists(os.path.join(self.root_dir, dir, f"event_frames_{self.method}_{self.ran}_{self.suffix}", 'left', f"event_frame_{idx:05d}"+'.npy')):
+                    if not os.path.exists(os.path.join(self.root_dir, dir, f"event_frames_{self.event_representation}", 'left', f"event_frame_{idx:05d}"+'.npy')):
                         continue
                     if dir == test_sequence and split.startswith('test'):
-                        self.all_files.append(os.path.join(dir, f"event_frames_{self.method}_{self.ran}_{self.suffix}", 'left', f"{idx:05d}"))
+                        self.all_files.append(os.path.join(dir, f"event_frames_{self.event_representation}", 'left', f"{idx:05d}"))
                     elif (not dir == test_sequence) and split == 'train':
-                        self.all_files.append(os.path.join(dir, f"event_frames_{self.method}_{self.ran}_{self.suffix}", 'left', f"{idx:05d}"))
-                        # self.all_files.append(os.path.join(dir, f"event_frames_{self.method}_{self.ran}_{self.suffix}", 'right', f"{idx:05d}"))
+                        self.all_files.append(os.path.join(dir, f"event_frames_{self.event_representation}", 'left', f"{idx:05d}"))
+                        self.all_files.append(os.path.join(dir, f"event_frames_{self.event_representation}", 'right', f"{idx:05d}"))
                     
                     R = quaternion_from_matrix(torch.tensor(Ln_T_L0[idx]))
                     T = Ln_T_L0[idx][:3, 3]
@@ -176,7 +174,7 @@ class DatasetM3ED(Dataset):
         camera = str(item.split('/')[2])
         timestamp = str(item.split('/')[3])
 
-        event_frame_path = os.path.join(self.root_dir, run, f"event_frames_{self.method}_{self.ran}_{self.suffix}", camera, 'event_frame_'+timestamp+'.npy')
+        event_frame_path = os.path.join(self.root_dir, run, f"event_frames_{self.event_representation}", camera, 'event_frame_'+timestamp+'.npy')
         pc_path = os.path.join(self.root_dir, run, "local_maps", "point_cloud_"+f"{int(timestamp)+1:05d}"+'.h5')
 
         try:
@@ -217,11 +215,7 @@ class DatasetM3ED(Dataset):
             pc_in = rotate_forward(pc_in, R, T)
 
         event_frame = np.load(event_frame_path)
-        # event_frame = cv2.medianBlur(event_frame, 3)
-        # event_frame = cv2.GaussianBlur(event_frame, (7,7), 0)
-        # event_frame = cv2.GaussianBlur(event_frame, (5,5), 0)
         event_time_frame = torch.tensor(event_frame).float()
-        # event_time_frame = torch.tensor(np.load(event_frame_path)).permute(1, 2, 0)
         event_time_frame[event_time_frame<0] = 0
         event_time_frame /= torch.max(event_time_frame)
 
@@ -230,7 +224,6 @@ class DatasetM3ED(Dataset):
             if h_mirror:
                 event_time_frame = event_time_frame.transpose(Image.FLIP_LEFT_RIGHT)
             event_time_frame = event_time_frame.rotate(img_rotation)
-            # event_time_frame = F.rotate(event_time_frame, img_rotation)
             event_time_frame = F.to_tensor(event_time_frame)
             event_frame = event_time_frame
         else:
@@ -251,7 +244,6 @@ class DatasetM3ED(Dataset):
             rotx = np.random.uniform(-max_angle, max_angle) * (3.141592 / 180.0)
             transl_x = np.random.uniform(-self.max_t, self.max_t)
             transl_y = np.random.uniform(-self.max_t, self.max_t)
-            # transl_z = np.random.uniform(-self.max_t, self.max_t)
             transl_z = np.random.uniform(-min(self.max_t, 0.1), min(self.max_t, 0.1))
         else:
             initial_RT = self.test_RT[idx]
