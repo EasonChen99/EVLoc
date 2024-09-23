@@ -6,7 +6,44 @@ import numpy as np
 import cv2
 import torch
 from utils import depth_generation
-from utils_point import overlay_imgs
+import torch.nn.functional as F
+from matplotlib import cm
+
+
+def overlay_imgs(rgb, lidar):
+    rgb = rgb.clone().cpu().permute(1,2,0).numpy()
+    if rgb.shape[2] == 3:
+        rgb = rgb
+    else:
+        rgb = np.concatenate((np.zeros([rgb.shape[0], rgb.shape[1], 1]), rgb), axis=2)
+
+    lidar[lidar == 0] = 1000. 
+    lidar = -lidar
+
+    lidar = lidar.clone()
+    lidar = lidar.unsqueeze(0)
+    lidar = lidar.unsqueeze(0)
+
+    lidar = F.max_pool2d(lidar, 3, 1, 1)
+    lidar = -lidar
+    lidar[lidar == 1000.] = 0.
+
+    lidar = lidar[0][0]
+
+
+    lidar = lidar.cpu().numpy()
+    min_d = 0
+    max_d = np.max(lidar)
+    lidar = ((lidar - min_d) / (max_d - min_d)) * 255
+    lidar = lidar.astype(np.uint8)
+    lidar_color = cm.jet(lidar)
+    lidar_color[:, :, 3] = 0.5
+    lidar_color[lidar == 0] = [0, 0, 0, 0]
+    blended_img = lidar_color[:, :, :3] * (np.expand_dims(lidar_color[:, :, 3], 2)) \
+                + rgb * (1. - np.expand_dims(lidar_color[:, :, 3], 2))
+    blended_img = blended_img.clip(min=0., max=1.)
+    blended_img = (blended_img*255).astype(np.uint8)
+    return blended_img
 
 def get_calib_m3ed(sequence):
     if sequence == "falcon_indoor_flight_1":
