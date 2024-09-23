@@ -131,12 +131,6 @@ def uncertainty_loss(flow_preds, uncertainty_maps, flow_gt, gamma=0.8, MAX_FLOW=
         
         flow_error = torch.norm(flow_preds[i] - flow_gt, dim=1, keepdim=True)    # Bx1xHxW
 
-        # flow_cos, flow_mag = cal_cosine(flow_preds[i], flow_gt)
-        # delta_flow = flow_cos * flow_mag
-        # if i > 0:
-        #     pre_flow_cos, pre_flow_mag = cal_cosine(flow_preds[i-1], flow_gt)
-        #     pre_flow = pre_flow_cos * pre_flow_mag
-        #     delta_flow = delta_flow - pre_flow
         delta_flow = flow_error - pre_flow_error
 
         # min-max normalization
@@ -160,12 +154,10 @@ def uncertainty_loss(flow_preds, uncertainty_maps, flow_gt, gamma=0.8, MAX_FLOW=
 
         # calculate flow prediction loss
         flow_reg_loss = flow_error[:, 0, :, :] * valid * uncertainty_map_gt[:, 0, :, :]
-        # flow_reg_loss = flow_error[:, 0, :, :] * valid
         flow_reg_loss = torch.sum(flow_reg_loss, dim=[1, 2])
         flow_reg_loss = flow_reg_loss / (mask_sum + 1e-5)
 
         flow_loss += i_weight * (uncertainty_reg_loss.mean() + flow_reg_loss.mean())
-        # flow_loss += i_weight * flow_reg_loss.mean()
 
         pre_flow_error = flow_error
 

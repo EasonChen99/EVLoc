@@ -2,30 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class UncertaintyHead(nn.Module):
-    def __init__(self, input_dim=128, hidden_dim=256):
-        super(UncertaintyHead, self).__init__()
-        self.conv1 = nn.Conv2d(input_dim, hidden_dim, 3, padding=1)
-        self.conv2 = nn.Conv2d(hidden_dim, 1, 3, padding=1)
-        self.relu = nn.ReLU(inplace=True)
-        # self.softmax = nn.Softmax(dim=-1)
-
-    def forward(self, x):
-        score = self.conv2(self.relu(self.conv1(x)))
-
-        # b, c, h, w = x.shape
-        # x = self.softmax(x.view(b, -1))
-        # x = x.reshape(b, c, h, w)
-
-        min_val = score.min(dim=-1, keepdim=True)[0].min(dim=-2, keepdim=True)[0]
-        max_val = score.max(dim=-1, keepdim=True)[0].max(dim=-2, keepdim=True)[0]
-        eps = 1e-6
-        range_val = max_val - min_val
-        range_val[range_val < eps] = eps
-        score = (score - min_val) / range_val
-
-        return score
-
 class FlowHead(nn.Module):
     def __init__(self, input_dim=128, hidden_dim=256, output_dim=2):
         super(FlowHead, self).__init__()
@@ -109,13 +85,8 @@ class BasicUpdateBlock(nn.Module):
         self.args = args
         self.encoder = BasicMotionEncoder(args)
         self.gru = SepConvGRU(hidden_dim=hidden_dim, input_dim=128+hidden_dim)
-        # if args.use_uncertainty:
-        #     self.flow_head = FlowHead(hidden_dim, hidden_dim=256, output_dim=4)
-        # else:
         self.flow_head = FlowHead(hidden_dim, hidden_dim=256, output_dim=2)
 
-        # if args.use_uncertainty:
-            # self.uncertainty_head = UncertaintyHead(hidden_dim, hidden_dim=256)
 
         self.mask = nn.Sequential(
             nn.Conv2d(128, 256, 3, padding=1),
@@ -133,9 +104,4 @@ class BasicUpdateBlock(nn.Module):
         # scale mask to balence gradients
         mask = .25 * self.mask(net)
 
-        # if self.args.use_uncertainty:
-        #     uncertainty_map = delta_flow[:, 2:, :, :]
-        #     delta_flow = delta_flow[:, :2, :, :]
-        #     return net, mask, delta_flow, uncertainty_map
-        # else:
         return net, mask, delta_flow

@@ -10,7 +10,7 @@ import torch
 
 from core.datasets_m3ed import DatasetM3ED
 from core.backbone import Backbone_Event_Offset_RT
-from core.utils import (count_parameters, merge_inputs, fetch_optimizer, Logger, remove_noise, enhanced_depth_line_extract)
+from core.utils import (count_parameters, merge_inputs, fetch_optimizer, Logger)
 from core.utils_point import (overlay_imgs, to_rotation_matrix, quaternion_from_matrix)
 from core.data_preprocess import Data_preprocess
 from core.flow2pose import Flow2Pose, err_Pose
