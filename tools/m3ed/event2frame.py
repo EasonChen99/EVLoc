@@ -11,11 +11,11 @@ from event_utils import events_to_voxel_timesync_torch
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset", 
-                    default="/media/eason/e835c718-d773-44a1-9ca4-881204d9b53d/Datasets/M3ED/Falcon/Indoor/flight_1",
+                    default="/media/eason/e835c718-d773-44a1-9ca4-881204d9b53d/Datasets/M3ED/Falcon/flight_3",
                     help="Root path to the dataset", 
                     type=str)
     ap.add_argument("--sequence",
-                    default="falcon_indoor_flight_1",
+                    default="falcon_indoor_flight_3",
                     help="Sequence name for processing",
                     type=str)
     ap.add_argument("--camera",
@@ -126,9 +126,9 @@ if __name__ == '__main__':
             event_time_image[event_time_image < 0] = 0
         elif args.method == "ours_denoise":
             r = 6
-            B = 15
+            B = 1
             R = 1
-            threshold = 0.3
+            threshold = 0.7
             total_range = np.arange(idx_start, idx_cur)
             subsequences = np.array_split(total_range, B)
             for subseq in subsequences:

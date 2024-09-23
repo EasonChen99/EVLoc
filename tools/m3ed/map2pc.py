@@ -9,11 +9,11 @@ import tqdm
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset", 
-                    default="/media/eason/e835c718-d773-44a1-9ca4-881204d9b53d/Datasets/M3ED/Falcon/Indoor/flight_1",
+                    default="/media/eason/e835c718-d773-44a1-9ca4-881204d9b53d/Datasets/M3ED/Falcon/flight_3",
                     help="Root path to the dataset", 
                     type=str)
     ap.add_argument("--sequence",
-                    default="falcon_indoor_flight_1",
+                    default="falcon_indoor_flight_3",
                     help="Sequence name for processing",
                     type=str)
     ap.add_argument("--save_dir",
@@ -57,9 +57,9 @@ if __name__ == '__main__':
         indexes = local_map[0, :] > -1.
         
         ## falcon_indoor_flight
-        # indexes = indexes & (local_map[0, :] < 10.)
-        # indexes = indexes & (local_map[1, :] > -5.)
-        # indexes = indexes & (local_map[1, :] < 5.)
+        indexes = indexes & (local_map[0, :] < 10.)
+        indexes = indexes & (local_map[1, :] > -5.)
+        indexes = indexes & (local_map[1, :] < 5.)
 
         ## falcon_outdoor_day_penno_parking
         # indexes = indexes & (local_map[0, :] < 100.)
@@ -67,9 +67,9 @@ if __name__ == '__main__':
         # indexes = indexes & (local_map[1, :] < 25.)
         
         ## spot_outdoor_day_srt_under_bridge
-        indexes = indexes & (local_map[0, :] < 50.)
-        indexes = indexes & (local_map[1, :] > -15.)
-        indexes = indexes & (local_map[1, :] < 15.)
+        # indexes = indexes & (local_map[0, :] < 50.)
+        # indexes = indexes & (local_map[1, :] > -15.)
+        # indexes = indexes & (local_map[1, :] < 15.)
         
         local_map = local_map[:, indexes]
         local_map = torch.matmul(prophesee_left_T_lidar, local_map)
