@@ -33,10 +33,6 @@ As for event data, we also need to generate event frames accordingly.
 python tools/event2frame.py --dataset [PATH_TO_DATA] --sequence [SPECIFIED_SEQUENCE] --save_dir [PATH_TO_SAVEDIR] --camera [WHICH_CAMERE] --method [EVENT_REPRESENTATION]
 ```
 
-
-
-
-
 ## Demos
 Pretrained models can be downloaded from [google drive](https://drive.google.com/drive/folders/1ASoSb4XsNDopaBkD503m9Vo_UHYpGTsa?usp=sharing)
 
@@ -45,3 +41,12 @@ You can demo a trained model on a sequence of frames
 python main_event_baseline.py --ev_input ours_denoise_pre_100000 --load_checkpoints checkpoints/baseline.pth -e
 ```
 
+## Training
+You can train a model using `main_event_baseline.py`. Training logs will be written to the `runs` which can be visualized using tensorboard.
+```Shell
+python main_event_baseline.py --data_path [PATH_TO_PREPROCESSED_DATA] --test_sequence falcon_indoor_flight_3 --max_depth 10. --epochs 100 --batch_size 2 --lr 4e-5 --gpus 0 --max_r 5. --max_t 0.5 --evaluate_interval 1
+```
+If you want to train a model with the offset alleviation module, you can use `main_event_offset_RT.py`.
+```Shell
+python main_event_offset_RT.py --data_path [PATH_TO_PREPROCESSED_DATA] --test_sequence falcon_indoor_flight_3 --max_depth 10. --epochs 100 --batch_size 2 --lr 4e-5 --gpus 0 --max_r 5. --max_t 0.5 --evaluate_interval 1
+```
