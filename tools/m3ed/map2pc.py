@@ -9,11 +9,11 @@ import tqdm
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset", 
-                    default="/media/eason/e835c718-d773-44a1-9ca4-881204d9b53d/Datasets/M3ED/Falcon/flight_3",
+                    default="/media/eason/e835c718-d773-44a1-9ca4-881204d9b53d/Datasets/M3ED/Falcon/flight_2",
                     help="Root path to the dataset", 
                     type=str)
     ap.add_argument("--sequence",
-                    default="falcon_indoor_flight_3",
+                    default="falcon_indoor_flight_2",
                     help="Sequence name for processing",
                     type=str)
     ap.add_argument("--save_dir",

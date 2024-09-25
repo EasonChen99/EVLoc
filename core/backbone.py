@@ -13,8 +13,6 @@ from core.utils_point import invert_pose
 
 import mathutils
 
-import spconv.pytorch as spconv
-
 try:
     autocast = torch.cuda.amp.autocast
 except:

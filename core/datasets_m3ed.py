@@ -91,8 +91,8 @@ class DatasetM3ED(Dataset):
         self.all_files = []
         
         scene_list = [
-                    #   'falcon_indoor_flight_1', 
-                    #   'falcon_indoor_flight_2', 
+                      'falcon_indoor_flight_1', 
+                      'falcon_indoor_flight_2', 
                       'falcon_indoor_flight_3', 
                     #   'falcon_outdoor_day_penno_parking_1',
                     #   'falcon_outdoor_day_penno_parking_2',
