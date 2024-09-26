@@ -51,13 +51,14 @@ if __name__ == '__main__':
     ts_map_prophesee_left = poses['ts_map_prophesee_left']
 
     # out_file = os.path.join(args.save_dir, args.sequence, f"event_frames_{args.method}_{args.time_window}", args.camera)
-    out_file = os.path.join(args.save_dir, args.sequence, f"event_frames_{args.method}_pre_{100000}_half", args.camera)
+    out_file = os.path.join(args.save_dir, args.sequence, f"event_frames_{args.method}_pre_{100000}", args.camera)
+    # out_file = os.path.join(args.save_dir, args.sequence, f"event_frames_{args.method}_pre_{100000}_half", args.camera)
     if not os.path.exists(out_file):
         os.makedirs(out_file)
     
 
-    # rows, cols = event_data['resolution'][1], event_data['resolution'][0]
-    rows, cols = event_data['resolution'][1]//2, event_data['resolution'][0]//2
+    rows, cols = event_data['resolution'][1], event_data['resolution'][0]
+    # rows, cols = event_data['resolution'][1]//2, event_data['resolution'][0]//2
 
     t_start = event_data['t'][0]
 
@@ -126,8 +127,7 @@ if __name__ == '__main__':
             event_time_image[event_time_image > 0] -= event_data['t'][idx_start]
             event_time_image[event_time_image < 0] = 0
         elif args.method == "ours_denoise":
-            # r = 6
-            r = 5
+            r = 6 # 5
             B = 1
             R = 1
             threshold = 0.7
@@ -136,8 +136,8 @@ if __name__ == '__main__':
             for subseq in subsequences:
                 mask = np.zeros((rows, cols), dtype=bool)
                 for idx in subseq:
-                    # y, x = event_data['y'][idx], event_data['x'][idx]
-                    y, x = event_data['y'][idx]//2, event_data['x'][idx]//2
+                    y, x = event_data['y'][idx], event_data['x'][idx]
+                    # y, x = event_data['y'][idx]//2, event_data['x'][idx]//2
                     if event_data['p'][idx] > 0:
                         patch = event_time_image[max(0, y-r):y+r+1, max(0, x-r):x+r+1, 0]
                         patch = np.where(patch>0, patch-(event_data['t'][idx]-patch)/15., patch)
