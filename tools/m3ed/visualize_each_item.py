@@ -150,8 +150,8 @@ if __name__ == '__main__':
         event_time_image[event_time_image<0]=0
         event_time_image = np.concatenate((np.zeros([event_time_image.shape[0], event_time_image.shape[1], 1]), event_time_image), axis=2)
         event_time_image = (event_time_image / np.max(event_time_image) * 255).astype(np.uint8)
-        # event_time_image = event_time_image[60:660, 160:960+160, :]
-        event_time_image = event_time_image[32:32+296, 64:64+512, :]
+        event_time_image = event_time_image[60:660, 160:960+160, :]
+        # event_time_image = event_time_image[32:32+296, 64:64+512, :]
         cv2.imwrite(f"{save_path}/{idx:05d}_event_frame.png", event_time_image)
         
         try:
@@ -176,11 +176,11 @@ if __name__ == '__main__':
 
         calib = get_calib_m3ed(args.sequence)
         calib = calib.cuda().float()
-        # sparse_depth = depth_generation(pc_in.cuda(), (720, 1280), calib, 3., 5, device='cuda:0')
-        sparse_depth = depth_generation(pc_in.cuda(), (360, 640), calib / 2., 3., 5, device='cuda:0')
+        sparse_depth = depth_generation(pc_in.cuda(), (720, 1280), calib, 3., 5, device='cuda:0')
+        # sparse_depth = depth_generation(pc_in.cuda(), (360, 640), calib / 2., 3., 5, device='cuda:0')
         sparse_depth = overlay_imgs(sparse_depth.repeat(3, 1, 1)*0, sparse_depth[0, ...])
-        # sparse_depth = sparse_depth[60:660, 160:960+160, :]
-        sparse_depth = sparse_depth[32:32+296, 64:64+512, :]
+        sparse_depth = sparse_depth[60:660, 160:960+160, :]
+        # sparse_depth = sparse_depth[32:32+296, 64:64+512, :]
         cv2.imwrite(f"{save_path}/{idx:05d}_depth.png", sparse_depth)
 
 
