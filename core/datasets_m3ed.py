@@ -261,6 +261,8 @@ class DatasetM3ED(Dataset):
         R, T = torch.tensor(R), torch.tensor(T)
 
         calib = get_calib_m3ed(run)
+        # calib /= 2.
+
         if h_mirror:
             calib[2] = event_frame.shape[2] - calib[2]
 

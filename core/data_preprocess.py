@@ -199,7 +199,7 @@ class Data_preprocess:
         return rgb_input, lidar_input, flow_gt
     
 
-    def push_input(self, rgbs, pcs, T_errs, R_errs, device, MAX_DEPTH=10., split='train'):
+    def push_input(self, rgbs, pcs, T_errs, R_errs, device, MAX_DEPTH=10., h=600, w=960, split='train'):
         lidar_input = []
         rgb_input = []
         x_list = []
@@ -239,7 +239,7 @@ class Data_preprocess:
 
             ## downsample and crop
             rgb, depth_img_no_occlusion_RT_training, x, y \
-                = self.DownsampleCrop_input(rgb, depth_img_no_occlusion_RT_training, split)
+                = self.DownsampleCrop_input(rgb, depth_img_no_occlusion_RT_training, split, h=h, w=w)
             x_list.append(x)
             y_list.append(y)
 

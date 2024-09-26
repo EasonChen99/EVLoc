@@ -65,6 +65,24 @@ def train(args, TrainImgLoader, model, optimizer, scheduler, scaler, logger, dev
 
         data_generate = Data_preprocess(calib, occlusion_threshold, occlusion_kernel)
         event_input, lidar_input, flow_gt = data_generate.push(event_frame, pc, T_err, R_err, device, MAX_DEPTH=args.max_depth, h=600, w=960)
+        # event_input, lidar_input, flow_gt = data_generate.push(event_frame, pc, T_err, R_err, device, MAX_DEPTH=args.max_depth, h=296, w=512)
+
+
+        vis_event_time_image = event_input[0,...].permute(1, 2, 0).cpu().numpy()
+        if vis_event_time_image.shape[2] == 1:
+            vis_event_time_image = event_input[0,...].permute(1, 2, 0).repeat(1, 1, 3).cpu().numpy()
+        else:
+            vis_event_time_image = np.concatenate((np.zeros([vis_event_time_image.shape[0], vis_event_time_image.shape[1], 1]), vis_event_time_image), axis=2)
+        vis_event_time_image = vis_event_time_image[:, :, :3]
+        cv2.imwrite(f"./visualization/input/{i_batch:05d}_event.png", (vis_event_time_image / np.max(vis_event_time_image) * 255).astype(np.uint8))
+        if event_input.shape[1] == 1:
+            vis_lidar_input = overlay_imgs(event_input[0, :, :, :].repeat(3, 1, 1)*0, lidar_input[0, 0, :, :])
+        else:
+            vis_lidar_input = overlay_imgs(event_input[0, :3, :, :]*0, lidar_input[0, 0, :, :])
+        lidar_input[lidar_input==1000.] = 0.
+        cv2.imwrite(f"./visualization/input/{i_batch:05d}_projection.png", (vis_lidar_input / np.max(vis_lidar_input) * 255).astype(np.uint8))
+
+
 
         optimizer.zero_grad()
         flow_preds = model(lidar_input, event_input, iters=args.iters)
@@ -96,6 +114,7 @@ def test(args, TestImgLoader, model, device, cal_pose=False):
 
         data_generate = Data_preprocess(calib, occlusion_threshold, occlusion_kernel)
         event_input, lidar_input, flow_gt = data_generate.push(event_frame, pc, T_err, R_err, device, MAX_DEPTH=args.max_depth, split='test', h=600, w=960)
+        # event_input, lidar_input, flow_gt = data_generate.push(event_frame, pc, T_err, R_err, device, MAX_DEPTH=args.max_depth, split='test', h=296, w=512)
 
         end = time.time()
         _, flow_up = model(lidar_input, event_input, iters=24, test_mode=True)
@@ -113,7 +132,8 @@ def test(args, TestImgLoader, model, device, cal_pose=False):
         out_list.append(out[val].cpu().numpy())
 
         if cal_pose:
-            R_pred, T_pred, inliers, flag = Flow2Pose(flow_up, lidar_input, calib, MAX_DEPTH=args.max_depth)
+            R_pred, T_pred, inliers, flag = Flow2Pose(flow_up, lidar_input, calib, MAX_DEPTH=args.max_depth, x=60, y=160, h=600, w=960)
+            # R_pred, T_pred, inliers, flag = Flow2Pose(flow_up, lidar_input, calib, MAX_DEPTH=args.max_depth, x=32, y=64, h=296, w=512)
 
             Time += time.time() - end
             if flag:
@@ -126,19 +146,6 @@ def test(args, TestImgLoader, model, device, cal_pose=False):
                   f"{np.median(err_r_list):.5f} {len(outliers)} {Time / (i_batch+1):.5f}")
         
 
-        # original_overlay = overlay_imgs(event_input[0, :, :, :], lidar_input[0, 0, :, :])
-        # cv2.imwrite(f'./visualization/depth/{i_batch:05d}_depth_1_ori.png', original_overlay)
-        # RT_inv = to_rotation_matrix(R_err[0], T_err[0])
-        # RT_inv = RT_inv.to(device)
-        # RT = RT_inv.clone().inverse()
-        # RT_pred = to_rotation_matrix(R_pred, T_pred)
-        # RT_pred = RT_pred.to(device)
-        # RT_new = torch.mm(RT, RT_pred)
-        # T_composed = RT_new[:3, 3]
-        # R_composed = quaternion_from_matrix(RT_new)
-        # _, lidar_input_pred, _, _ = data_generate.push_input(event_frame, pc, [T_composed], [R_composed], device, split='test') 
-        # pred_overlay = overlay_imgs(event_input[0, :, :, :], lidar_input_pred[0, 0, :, :])
-        # cv2.imwrite(f'./visualization/depth/{i_batch:05d}_depth_2_pred.png', pred_overlay)
         
     epe_list = np.array(epe_list)
     out_list = np.concatenate(out_list)
