@@ -116,7 +116,7 @@ if __name__ == '__main__':
                     help="Root path to the dataset", 
                     type=str)
     ap.add_argument("--sequence",
-                    default="spot_indoor_building_loop",
+                    default="falcon_indoor_flight_2",
                     help="Sequence name for processing",
                     type=str)
     ap.add_argument("--method",
@@ -152,7 +152,7 @@ if __name__ == '__main__':
         event_time_image = (event_time_image / np.max(event_time_image) * 255).astype(np.uint8)
         event_time_image = event_time_image[60:660, 160:960+160, :]
         # event_time_image = event_time_image[32:32+296, 64:64+512, :]
-        cv2.imwrite(f"{save_path}/{idx:05d}_event_frame.png", event_time_image)
+        cv2.imwrite(f"{save_path}/{idx:05d}_event_frame_{args.camera}.png", event_time_image)
         
         try:
             with h5py.File(pc_path, 'r') as hf:
@@ -181,6 +181,6 @@ if __name__ == '__main__':
         sparse_depth = overlay_imgs(sparse_depth.repeat(3, 1, 1)*0, sparse_depth[0, ...])
         sparse_depth = sparse_depth[60:660, 160:960+160, :]
         # sparse_depth = sparse_depth[32:32+296, 64:64+512, :]
-        cv2.imwrite(f"{save_path}/{idx:05d}_depth.png", sparse_depth)
+        cv2.imwrite(f"{save_path}/{idx:05d}_depth_{args.camera}.png", sparse_depth)
 
 

@@ -4,6 +4,7 @@ import h5py
 import numpy as np
 import cv2
 import open3d as o3
+import matplotlib.pyplot as plt
 import torch
 from tqdm import tqdm
 from utils import load_data, load_map, pc_visualize, depth_generation, find_near_index
@@ -14,7 +15,7 @@ import argparse
 if __name__ == '__main__':
     args = argparse.ArgumentParser()
     args.add_argument("--dataset", 
-                    default="/media/eason/e835c718-d773-44a1-9ca4-881204d9b53d/Datasets/M3ED/Falcon/flight_3",
+                    default="/media/eason/Backup/Datasets/M3ED/Falcon/flight_3",
                     help="Root path to the dataset", 
                     type=str)
     args.add_argument("--sequence",
@@ -28,6 +29,8 @@ if __name__ == '__main__':
     args.add_argument("--idx",
                     default=200,
                     type=int)
+    args.add_argument("--visualize_event_in_3d",
+                      action='store_true')
     args = args.parse_args()
 
     device = torch.device(f"cuda:0" if torch.cuda.is_available() else "cpu")
@@ -68,6 +71,22 @@ if __name__ == '__main__':
         rows, cols = event_data['resolution'][1], event_data['resolution'][0]
         print(idx_start, idx_cur, idx_end)
         print(event_data['t'][idx_start], event_data['t'][idx_cur], event_data['t'][idx_end])
+        if args.visualize_event_in_3d:
+            x = event_data['x'][idx_start:idx_start+5000]
+            y = event_data['y'][idx_start:idx_start+5000]
+            t = event_data['t'][idx_start:idx_start+5000] - event_data['t'][idx_start]
+            polarity = event_data['p'][idx_start:idx_start+5000]
+            fig = plt.figure()
+            fig = plt.figure(figsize=(6.4, 6))
+            ax = fig.add_subplot(111, projection='3d')
+            colors = np.where(polarity > 0, 'r', 'b')  # Red for positive, Blue for negative polarity
+            sc = ax.scatter(x, y, t, c=colors)
+            ax.set_xlabel('X')
+            ax.set_ylabel('Y')
+            ax.set_zlabel('T')
+            plt.tight_layout()
+            plt.savefig("./events.png")
+            sys.exit()
         if args.method == "TS":
             # # Time surface
             event_time_image = np.zeros((rows, cols, 2), dtype=np.float32)
