@@ -323,9 +323,6 @@ class Backbone_Event_Offset_RT(nn.Module):
         image1 = 2 * image1 - 1.0
         image2 = 2 * image2 - 1.0
 
-        # print(torch.min(image1), torch.max(image1))
-        # print(torch.min(image2), torch.max(image2))
-
         image1 = image1.contiguous()
         image2 = image2.contiguous()
 
@@ -403,4 +400,4 @@ class Backbone_Event_Offset_RT(nn.Module):
         if test_mode:
             return coords1 - coords0, flow_up, offset_R, offset_T
             
-        return flow_predictions, offsets_R, offsets_T, fmap2
+        return flow_predictions, offsets_R, offsets_T

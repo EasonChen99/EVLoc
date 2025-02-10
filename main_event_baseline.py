@@ -38,7 +38,6 @@ except:
 
         def update(self):
             pass
-    
 
 def _init_fn(worker_id, seed):
     seed = seed
@@ -52,7 +51,6 @@ def _init_fn(worker_id, seed):
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
 
-
 def train(args, TrainImgLoader, model, optimizer, scheduler, scaler, logger, device, epoch):
     global occlusion_threshold, occlusion_kernel
     model.train()
@@ -65,8 +63,6 @@ def train(args, TrainImgLoader, model, optimizer, scheduler, scaler, logger, dev
 
         data_generate = Data_preprocess(calib, occlusion_threshold, occlusion_kernel)
         event_input, lidar_input, flow_gt = data_generate.push(event_frame, pc, T_err, R_err, device, MAX_DEPTH=args.max_depth, h=600, w=960)
-        # event_input, lidar_input, flow_gt = data_generate.push(event_frame, pc, T_err, R_err, device, MAX_DEPTH=args.max_depth, h=296, w=512)
-
 
         vis_event_time_image = event_input[0,...].permute(1, 2, 0).cpu().numpy()
         if vis_event_time_image.shape[2] == 1:
@@ -81,8 +77,6 @@ def train(args, TrainImgLoader, model, optimizer, scheduler, scaler, logger, dev
             vis_lidar_input = overlay_imgs(event_input[0, :3, :, :]*0, lidar_input[0, 0, :, :])
         lidar_input[lidar_input==1000.] = 0.
         cv2.imwrite(f"./visualization/input/{i_batch:05d}_projection.png", (vis_lidar_input / np.max(vis_lidar_input) * 255).astype(np.uint8))
-
-
 
         optimizer.zero_grad()
         flow_preds = model(lidar_input, event_input, iters=args.iters)
@@ -114,7 +108,6 @@ def test(args, TestImgLoader, model, device, cal_pose=False):
 
         data_generate = Data_preprocess(calib, occlusion_threshold, occlusion_kernel)
         event_input, lidar_input, flow_gt = data_generate.push(event_frame, pc, T_err, R_err, device, MAX_DEPTH=args.max_depth, split='test', h=600, w=960)
-        # event_input, lidar_input, flow_gt = data_generate.push(event_frame, pc, T_err, R_err, device, MAX_DEPTH=args.max_depth, split='test', h=296, w=512)
 
         end = time.time()
         _, flow_up = model(lidar_input, event_input, iters=24, test_mode=True)
@@ -133,7 +126,6 @@ def test(args, TestImgLoader, model, device, cal_pose=False):
 
         if cal_pose:
             R_pred, T_pred, inliers, flag = Flow2Pose(flow_up, lidar_input, calib, MAX_DEPTH=args.max_depth, x=60, y=160, h=600, w=960)
-            # R_pred, T_pred, inliers, flag = Flow2Pose(flow_up, lidar_input, calib, MAX_DEPTH=args.max_depth, x=32, y=64, h=296, w=512)
 
             Time += time.time() - end
             if flag:
@@ -162,7 +154,7 @@ if __name__ == '__main__':
     parser.add_argument('--data_path',
                         type=str,
                         metavar='DIR',
-                        default='/home/eason/WorkSpace/EventbasedVisualLocalization/preprocessed_dataset/M3ED',
+                        default='/media/eason/Backup/Datasets/M3ED/generated/Falcon',
                         help='path to dataset')
     parser.add_argument('--ev_input', 
                         '--event_representation',
@@ -247,11 +239,15 @@ if __name__ == '__main__':
 
     batch_size = args.batch_size
 
+    _init_fn(0, seed)
+
     model = torch.nn.DataParallel(Backbone_Event(args), device_ids=args.gpus)
     print("Parameter Count: %d" % count_parameters(model))
     if args.load_checkpoints is not None:
         model.load_state_dict(torch.load(args.load_checkpoints))
     model.to(device)
+
+    _init_fn(0, seed)
 
     def init_fn(x):
         return _init_fn(x, seed)

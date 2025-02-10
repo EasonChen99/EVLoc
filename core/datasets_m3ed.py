@@ -113,7 +113,6 @@ class DatasetM3ED(Dataset):
             for idx in range(Ln_T_L0.shape[0]):
                 if idx + 70 < Ln_T_L0.shape[0] and idx > 70:
                 # if idx + 140 < Ln_T_L0.shape[0] and idx > 140:  # spot_outdoor
-                    print()
                     if not os.path.exists(os.path.join(self.root_dir, dir, "local_maps", f"point_cloud_{idx:05d}"+'.h5')):
                         continue
                     if not os.path.exists(os.path.join(self.root_dir, dir, f"event_frames_{self.event_representation}", 'left', f"event_frame_{idx:05d}"+'.npy')):
