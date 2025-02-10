@@ -314,7 +314,7 @@ class Backbone_Event_Offset_RT(nn.Module):
         
         return output*mask
 
-    def forward(self, image1, image2, iters=12, flow_init=None, test_mode=False, encode_only=False):
+    def forward(self, image1, image2, iters=12, flow_init=None, test_mode=False):
         """ 
             Estimate optical flow between pair of frames 
             image1: lidar_input
@@ -332,11 +332,7 @@ class Backbone_Event_Offset_RT(nn.Module):
         # run the feature network
         with autocast(enabled=self.args.mixed_precision):
             fmap1 = self.fnet_lidar(image1)
-            if not encode_only:
-                fmap2 = self.fnet_event(image2)
-
-        if encode_only:
-            return fmap1
+            fmap2 = self.fnet_event(image2)
 
         fmap1 = fmap1.float()
         fmap2 = fmap2.float()

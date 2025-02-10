@@ -64,19 +64,19 @@ def train(args, TrainImgLoader, model, optimizer, scheduler, scaler, logger, dev
         data_generate = Data_preprocess(calib, occlusion_threshold, occlusion_kernel)
         event_input, lidar_input, flow_gt = data_generate.push(event_frame, pc, T_err, R_err, device, MAX_DEPTH=args.max_depth, h=600, w=960)
 
-        vis_event_time_image = event_input[0,...].permute(1, 2, 0).cpu().numpy()
-        if vis_event_time_image.shape[2] == 1:
-            vis_event_time_image = event_input[0,...].permute(1, 2, 0).repeat(1, 1, 3).cpu().numpy()
-        else:
-            vis_event_time_image = np.concatenate((np.zeros([vis_event_time_image.shape[0], vis_event_time_image.shape[1], 1]), vis_event_time_image), axis=2)
-        vis_event_time_image = vis_event_time_image[:, :, :3]
-        cv2.imwrite(f"./visualization/input/{i_batch:05d}_event.png", (vis_event_time_image / np.max(vis_event_time_image) * 255).astype(np.uint8))
-        if event_input.shape[1] == 1:
-            vis_lidar_input = overlay_imgs(event_input[0, :, :, :].repeat(3, 1, 1)*0, lidar_input[0, 0, :, :])
-        else:
-            vis_lidar_input = overlay_imgs(event_input[0, :3, :, :]*0, lidar_input[0, 0, :, :])
-        lidar_input[lidar_input==1000.] = 0.
-        cv2.imwrite(f"./visualization/input/{i_batch:05d}_projection.png", (vis_lidar_input / np.max(vis_lidar_input) * 255).astype(np.uint8))
+        # vis_event_time_image = event_input[0,...].permute(1, 2, 0).cpu().numpy()
+        # if vis_event_time_image.shape[2] == 1:
+        #     vis_event_time_image = event_input[0,...].permute(1, 2, 0).repeat(1, 1, 3).cpu().numpy()
+        # else:
+        #     vis_event_time_image = np.concatenate((np.zeros([vis_event_time_image.shape[0], vis_event_time_image.shape[1], 1]), vis_event_time_image), axis=2)
+        # vis_event_time_image = vis_event_time_image[:, :, :3]
+        # cv2.imwrite(f"./visualization/input/{i_batch:05d}_event.png", (vis_event_time_image / np.max(vis_event_time_image) * 255).astype(np.uint8))
+        # if event_input.shape[1] == 1:
+        #     vis_lidar_input = overlay_imgs(event_input[0, :, :, :].repeat(3, 1, 1)*0, lidar_input[0, 0, :, :])
+        # else:
+        #     vis_lidar_input = overlay_imgs(event_input[0, :3, :, :]*0, lidar_input[0, 0, :, :])
+        # lidar_input[lidar_input==1000.] = 0.
+        # cv2.imwrite(f"./visualization/input/{i_batch:05d}_projection.png", (vis_lidar_input / np.max(vis_lidar_input) * 255).astype(np.uint8))
 
         optimizer.zero_grad()
         flow_preds = model(lidar_input, event_input, iters=args.iters)
@@ -136,8 +136,6 @@ def test(args, TestImgLoader, model, device, cal_pose=False):
                 err_t_list.append(err_t.item())
             print(f"{i_batch:05d}: {np.mean(err_t_list):.5f} {np.mean(err_r_list):.5f} {np.median(err_t_list):.5f} "
                   f"{np.median(err_r_list):.5f} {len(outliers)} {Time / (i_batch+1):.5f}")
-        
-
         
     epe_list = np.array(epe_list)
     out_list = np.concatenate(out_list)
@@ -231,7 +229,6 @@ if __name__ == '__main__':
                         action='store_true',
                         help='evaluate model on validation set')
     args = parser.parse_args()    
-
 
     device = torch.device(f"cuda:{args.gpus[0]}" if torch.cuda.is_available() else "cpu")
     os.environ["CUDA_LAUNCH_BLOCKING"] = "1"

@@ -264,6 +264,7 @@ def overlay_imgs(rgb, lidar):
     else:
         rgb = np.concatenate((np.zeros([rgb.shape[0], rgb.shape[1], 1]), rgb), axis=2)
 
+    lidar = lidar.clone()
     lidar[lidar == 0] = 1000. 
     lidar = -lidar
 

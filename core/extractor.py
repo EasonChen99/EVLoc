@@ -249,16 +249,6 @@ class BasicEncoder_LiDAR(nn.Module):
             batch_dim = x[0].shape[0]
             x = torch.cat(x, dim=0)
 
-        # if i_batch is not None:
-        #     import cv2
-        #     import seaborn
-        #     import matplotlib.pyplot as plt
-        #     import numpy as np
-        #     heatmap = seaborn.heatmap(mask[0, 0, :, :].cpu().detach().numpy(), xticklabels=False, yticklabels=False, cbar=False, square=True, robust=True, cmap='gist_rainbow')
-        #     figure = heatmap.get_figure()
-        #     figure.savefig(f"./images/output/{i_batch:06d}_heatmap.png")
-        #     plt.close()
-
         x = self.conv1(x)  # 160 480 64
 
         x = self.norm1(x)
