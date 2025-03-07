@@ -2,7 +2,6 @@ import os
 import sys
 import time 
 
-import cv2
 import numpy as np
 import argparse
 import random
@@ -11,7 +10,6 @@ import torch
 from core.datasets_m3ed import DatasetM3ED as Dataset
 from core.backbone import Backbone_Event
 from core.utils import (count_parameters, merge_inputs, fetch_optimizer, Logger)
-from core.utils_point import overlay_imgs, to_rotation_matrix, quaternion_from_matrix
 from core.data_preprocess import Data_preprocess
 from core.flow2pose import Flow2Pose, err_Pose
 from core.losses import sequence_loss
@@ -63,20 +61,6 @@ def train(args, TrainImgLoader, model, optimizer, scheduler, scaler, logger, dev
 
         data_generate = Data_preprocess(calib, occlusion_threshold, occlusion_kernel)
         event_input, lidar_input, flow_gt = data_generate.push(event_frame, pc, T_err, R_err, device, MAX_DEPTH=args.max_depth, h=600, w=960)
-
-        # vis_event_time_image = event_input[0,...].permute(1, 2, 0).cpu().numpy()
-        # if vis_event_time_image.shape[2] == 1:
-        #     vis_event_time_image = event_input[0,...].permute(1, 2, 0).repeat(1, 1, 3).cpu().numpy()
-        # else:
-        #     vis_event_time_image = np.concatenate((np.zeros([vis_event_time_image.shape[0], vis_event_time_image.shape[1], 1]), vis_event_time_image), axis=2)
-        # vis_event_time_image = vis_event_time_image[:, :, :3]
-        # cv2.imwrite(f"./visualization/input/{i_batch:05d}_event.png", (vis_event_time_image / np.max(vis_event_time_image) * 255).astype(np.uint8))
-        # if event_input.shape[1] == 1:
-        #     vis_lidar_input = overlay_imgs(event_input[0, :, :, :].repeat(3, 1, 1)*0, lidar_input[0, 0, :, :])
-        # else:
-        #     vis_lidar_input = overlay_imgs(event_input[0, :3, :, :]*0, lidar_input[0, 0, :, :])
-        # lidar_input[lidar_input==1000.] = 0.
-        # cv2.imwrite(f"./visualization/input/{i_batch:05d}_projection.png", (vis_lidar_input / np.max(vis_lidar_input) * 255).astype(np.uint8))
 
         optimizer.zero_grad()
         flow_preds = model(lidar_input, event_input, iters=args.iters)
@@ -152,7 +136,7 @@ if __name__ == '__main__':
     parser.add_argument('--data_path',
                         type=str,
                         metavar='DIR',
-                        default='/media/eason/Backup/Datasets/M3ED/generated/Falcon',
+                        default='/media/eason/Backup/Datasets/Event_Datasets/M3ED/generated/Falcon',
                         help='path to dataset')
     parser.add_argument('--ev_input', 
                         '--event_representation',

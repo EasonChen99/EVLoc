@@ -66,20 +66,6 @@ def train(args, TrainImgLoader, model, optimizer, scheduler, scaler, logger, dev
         data_generate = Data_preprocess(calib, occlusion_threshold, occlusion_kernel)
         event_input, lidar_input, x_list, y_list = data_generate.push_input(event_frame, pc, T_err, R_err, device, MAX_DEPTH=args.max_depth, split='train', h=600, w=960)
 
-        # vis_event_time_image = event_input[0,...].permute(1, 2, 0).cpu().numpy()
-        # if vis_event_time_image.shape[2] == 1:
-        #     vis_event_time_image = event_input[0,...].permute(1, 2, 0).repeat(1, 1, 3).cpu().numpy()
-        # else:
-        #     vis_event_time_image = np.concatenate((np.zeros([vis_event_time_image.shape[0], vis_event_time_image.shape[1], 1]), vis_event_time_image), axis=2)
-        # vis_event_time_image = vis_event_time_image[:, :, :3]
-        # cv2.imwrite(f"./visualization/{i_batch:05d}_event.png", (vis_event_time_image / np.max(vis_event_time_image) * 255).astype(np.uint8))
-        # if event_input.shape[1] == 1:
-        #     vis_lidar_input = overlay_imgs(event_input[0, :, :, :].repeat(3, 1, 1)*0, lidar_input[0, 0, :, :])
-        # else:
-        #     vis_lidar_input = overlay_imgs(event_input[0, :3, :, :]*0, lidar_input[0, 0, :, :])
-        # lidar_input[lidar_input==1000.] = 0.
-        # cv2.imwrite(f"./visualization/{i_batch:05d}_projection.png", (vis_lidar_input / np.max(vis_lidar_input) * 255).astype(np.uint8))
-
         optimizer.zero_grad()
         flow_preds, offsets_R, offsets_T = model(lidar_input, event_input, iters=args.iters)
         loss = 0.0
@@ -157,14 +143,6 @@ def test(args, TestImgLoader, model, device, cal_pose=False):
                 outliers.append(i_batch)
             else:
                 RT_pred = to_rotation_matrix(R_pred, T_pred)
-                # R_offset = offset_R[0]
-                # T_offset = offset_T[0]
-                # RT_offset = to_rotation_matrix(R_offset, T_offset)
-
-                # RT_pred_offset = torch.mm(RT_pred, RT_offset.inverse().to(RT_pred.device))
-                # T_pred_offset = RT_pred_offset[:3, 3]
-                # R_pred_offset = quaternion_from_matrix(RT_pred_offset)
-                # err_r, err_t = err_Pose(R_pred_offset, T_pred_offset, R_err[0], T_err[0])
                 T_pred = RT_pred[:3, 3]
                 R_pred = quaternion_from_matrix(RT_pred)               
                 err_r, err_t = err_Pose(R_pred, T_pred, R_err[0], T_err[0])
@@ -189,7 +167,7 @@ if __name__ == '__main__':
     parser.add_argument('--data_path',
                         type=str,
                         metavar='DIR',
-                        default='/media/eason/Backup/Datasets/M3ED/generated/Falcon',
+                        default='/media/eason/Backup/Datasets/Event_Datasets/M3ED/generated/Falcon',
                         help='path to dataset')
     parser.add_argument('--ev_input', 
                         '--event_representation',
