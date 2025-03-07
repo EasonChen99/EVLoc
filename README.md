@@ -19,7 +19,7 @@ cd ../..
 ```
 Additionally, please compile [PoseLib](https://github.com/PoseLib/PoseLib) for use with pose solvers.
 
-## Required Data
+## Data Preprocessing
 To evaluate/train EVLoc, you could download the M3ED dataset.
 * [M3ED](https://m3ed.io/data_overview/)
 
