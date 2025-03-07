@@ -1,14 +1,14 @@
 # EVLoc
 This repository contains the source code for our paper:
 
-EVLoc: Event-based Visual Localization in LiDAR Maps via Event-Depth Registration<br/>
+[EVLoc: Event-based Visual Localization in LiDAR Maps via Event-Depth Registration](https://arxiv.org/pdf/2503.00167)<br/>
 Kuangyi Chen, Jun Zhang, Friedrich Fraundorfer<br/>
 
 ## Requirements
 The code has been trained and tested with PyTorch 2.2.2 and Cuda 12.2.
 ```Shell
-conda create -n E2D python=3.10 -y
-conda activate E2D
+conda create -n EVLoc python=3.10 -y
+conda activate EVLoc
 pip install -r requirements.txt
 cd core/correlation_package
 python setup.py install
@@ -17,6 +17,7 @@ cd visibility_package
 python setup.py install
 cd ../..
 ```
+Additionally, please compile [PoseLib](https://github.com/PoseLib/PoseLib) for use with pose solvers.
 
 ## Required Data
 To evaluate/train EVLoc, you could download the M3ED dataset.
@@ -38,7 +39,7 @@ Pretrained models can be downloaded from [google drive](https://drive.google.com
 
 You can demo a trained model on a sequence of frames
 ```Shell
-python main_event_baseline.py --ev_input ours_denoise_pre_100000 --load_checkpoints checkpoints/baseline.pth -e
+python main_event_baseline.py --ev_input ours_denoise_pre_100000 --load_checkpoints checkpoints/checkpoint.pth -e
 ```
 
 ## Training
