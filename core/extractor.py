@@ -2,8 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import spconv.pytorch as spconv
-
 class ResidualBlock(nn.Module):
     def __init__(self, in_planes, planes, norm_fn='group', stride=1):
         super(ResidualBlock, self).__init__()
@@ -172,8 +170,6 @@ class BasicEncoder_Event(nn.Module):
             x = torch.cat(x, dim=0)
 
         x = self.conv1(x)
-        # import cv2
-        # cv2.imwrite(f"./images/output/image.png", torch.sum(x, dim=1)[0].cpu().detach().numpy()*255)
         x = self.norm1(x)
         x = self.relu1(x)
 

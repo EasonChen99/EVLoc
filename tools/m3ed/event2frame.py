@@ -27,7 +27,7 @@ if __name__ == '__main__':
                     help="Event representation method",
                     type=str)
     ap.add_argument("--time_window",
-                    default="200000",
+                    default=100000,
                     help="length of time window",
                     type=int)
     ap.add_argument("--save_dir",
@@ -50,23 +50,20 @@ if __name__ == '__main__':
     poses = h5py.File(pose_path,'r')
     ts_map_prophesee_left = poses['ts_map_prophesee_left']
 
-    # out_file = os.path.join(args.save_dir, args.sequence, f"event_frames_{args.method}_{args.time_window}", args.camera)
-    out_file = os.path.join(args.save_dir, args.sequence, f"event_frames_{args.method}_pre_{100000}", args.camera)
-    # out_file = os.path.join(args.save_dir, args.sequence, f"event_frames_{args.method}_pre_{100000}_half", args.camera)
+    out_file = os.path.join(args.save_dir, args.sequence, f"event_frames_{args.method}_pre_{args.time_window}", args.camera)
     if not os.path.exists(out_file):
         os.makedirs(out_file)
     
 
     rows, cols = event_data['resolution'][1], event_data['resolution'][0]
-    # rows, cols = event_data['resolution'][1]//2, event_data['resolution'][0]//2
 
     t_start = event_data['t'][0]
 
     for i in tqdm(range(len(ts_map_prophesee_left)-2)):
         idx_cur = int(ts_map_prophesee_left[i+1])
-        t_ref = event_data_ref['t'][idx_cur]    # current timestamp
+        t_ref = event_data_ref['t'][idx_cur]
 
-        idx_start, idx_cur, idx_end = find_near_index(event_data_ref['t'][idx_cur], event_data['t'], time_window=args.time_window)
+        idx_start, idx_cur, idx_end = find_near_index(event_data_ref['t'][idx_cur], event_data['t'], time_window=args.time_window*2)
 
         event_time_image = np.zeros((rows, cols, 2), dtype=np.float32)
 
@@ -74,7 +71,6 @@ if __name__ == '__main__':
             continue
         
         if args.method == "timesurface":
-            # for id in range(idx_end-idx_start):
             for id in range(idx_cur - idx_start):
                 idx = int(id + idx_start)
                 y, x = event_data['y'][idx], event_data['x'][idx]
@@ -127,7 +123,7 @@ if __name__ == '__main__':
             event_time_image[event_time_image > 0] -= event_data['t'][idx_start]
             event_time_image[event_time_image < 0] = 0
         elif args.method == "ours_denoise":
-            r = 6 # 5
+            r = 6
             B = 1
             R = 1
             threshold = 0.7
@@ -137,7 +133,6 @@ if __name__ == '__main__':
                 mask = np.zeros((rows, cols), dtype=bool)
                 for idx in subseq:
                     y, x = event_data['y'][idx], event_data['x'][idx]
-                    # y, x = event_data['y'][idx]//2, event_data['x'][idx]//2
                     if event_data['p'][idx] > 0:
                         patch = event_time_image[max(0, y-r):y+r+1, max(0, x-r):x+r+1, 0]
                         patch = np.where(patch>0, patch-(event_data['t'][idx]-patch)/15., patch)
@@ -161,7 +156,6 @@ if __name__ == '__main__':
             event_time_image[event_time_image < 0] = 0
         else:
             raise "Method doesn't exit."
-
 
         now = np.array(event_time_image)
         np.save(f"{out_file}/event_frame_{i:05d}", now)

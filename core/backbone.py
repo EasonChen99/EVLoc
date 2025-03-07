@@ -397,12 +397,3 @@ class Backbone_Event_Offset_RT(nn.Module):
             return coords1 - coords0, flow_up, offset_R, offset_T
             
         return flow_predictions, offsets_R, offsets_T
-
-
-# x = torch.tensor([[[[ 0.,  1.,  2.,  3.,  4.],
-#                     [ 5.,  6.,  7.,  8.,  9.],
-#                     [10., 11., 12., 13., 14.],
-#                     [15., 16., 17., 18., 19.],
-#                     [20., 21., 22., 23., 24.]]]])
-# vgrid = torch.ones([1, 1, 1, 2])
-# y = torch.nn.functional.grid_sample(x, vgrid)

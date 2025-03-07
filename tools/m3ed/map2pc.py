@@ -34,17 +34,16 @@ if __name__ == '__main__':
 
     data = h5py.File(data_path,'r')
     prophesee_left_T_lidar = torch.tensor(data["/ouster/calib/T_to_prophesee_left"], device=device, dtype=torch.float32)
-    # print(prophesee_left_T_lidar) 
 
     # # pose load
     poses = h5py.File(pose_path,'r')
-    Cn_T_C0 = poses['Cn_T_C0']                                                  # 570 4 4
-    Ln_T_L0 = poses['Ln_T_L0']                                                  # 570 4 4
-    pose_ts = poses['ts']                                                       # 570
-    ts_map_prophesee_left = poses['ts_map_prophesee_left']                      # 570 index
+    Cn_T_C0 = poses['Cn_T_C0']                                                  
+    Ln_T_L0 = poses['Ln_T_L0']                                                  
+    pose_ts = poses['ts']                                                       
+    ts_map_prophesee_left = poses['ts_map_prophesee_left']                      
 
     # # pc map load
-    vox_map = load_map(pc_path, device)                                         # 4 N
+    vox_map = load_map(pc_path, device)                                         
     print(f'load pointclouds finished! {vox_map.shape[1]} points')
 
     for idx in tqdm.tqdm(range(Ln_T_L0.shape[0]-1)):
@@ -61,16 +60,6 @@ if __name__ == '__main__':
         indexes = indexes & (local_map[1, :] > -5.)
         indexes = indexes & (local_map[1, :] < 5.)
 
-        ## falcon_outdoor_day_penno_parking
-        # indexes = indexes & (local_map[0, :] < 100.)
-        # indexes = indexes & (local_map[1, :] > -25.)
-        # indexes = indexes & (local_map[1, :] < 25.)
-        
-        ## spot_outdoor_day_srt_under_bridge
-        # indexes = indexes & (local_map[0, :] < 50.)
-        # indexes = indexes & (local_map[1, :] > -15.)
-        # indexes = indexes & (local_map[1, :] < 15.)
-        
         local_map = local_map[:, indexes]
         local_map = torch.matmul(prophesee_left_T_lidar, local_map)
 
