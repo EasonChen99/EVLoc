@@ -4,7 +4,11 @@ This repository contains the source code for our paper:
 [EVLoc: Event-based Visual Localization in LiDAR Maps via Event-Depth Registration](https://arxiv.org/pdf/2503.00167)<br/>
 Kuangyi Chen, Jun Zhang, Friedrich Fraundorfer<br/>
 
-[![Watch the video](./media/overview.png)](https://youtu.be/tQw8s4iZgvg)
+A short introduction is provided in the video below.<br/>
+<a href="https://youtu.be/tQw8s4iZgvg">
+  <img src="./media/overview.png" width="480" alt="Watch the video">
+</a>
+
 
 ## Requirements
 The code has been trained and tested with PyTorch 2.2.2 and Cuda 12.2.
