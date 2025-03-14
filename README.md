@@ -16,10 +16,7 @@ The code has been trained and tested with PyTorch 2.2.2 and Cuda 12.2.
 conda create -n EVLoc python=3.10 -y
 conda activate EVLoc
 pip install -r requirements.txt
-cd core/correlation_package
-python setup.py install
-cd ..
-cd visibility_package
+cd core/visibility_package
 python setup.py install
 cd ../..
 ```
