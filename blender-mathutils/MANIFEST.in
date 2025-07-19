@@ -1,0 +1,6 @@
+include *.txt
+include MANIFEST.in
+include setup.py
+
+# Need '*.c' because of inline source files.
+recursive-include src *.c *.h
