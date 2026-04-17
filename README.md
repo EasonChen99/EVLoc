@@ -16,7 +16,7 @@ This work is extended by our follow-up paper:<br/>
 [[ICRA 2026] LEAR: Learning Edge-Aware Representations for Event-to-LiDAR Localization](https://arxiv.org/pdf/2603.01839)<br/>
 Kuangyi Chen, Jun Zhang, Yuxi Hu, Yi Zhou, Friedrich Fraundorfer<br/>
 
-Compared with EVLoc, LEAR further improves event-to-LiDAR localization by learning edge-aware representations and introducing cross-task feature fusion. Code: [LEAR](PASTE_YOUR_LEAR_REPO_LINK_HERE)
+Compared with EVLoc, LEAR further improves event-to-LiDAR localization by learning edge-aware representations and introducing cross-task feature fusion. Code: [LEAR](https://github.com/EasonChen99/LEAR)
 
 ## Requirements
 The code has been trained and tested with PyTorch 2.2.2 and Cuda 12.2.
